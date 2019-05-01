@@ -34,10 +34,11 @@ struct Entry {
 unsigned int read_number(void);
 void read_decimal(struct Decimal *);
 void parse_decimal(char *, struct Decimal *);
-void add_dat_file(char *, int, char **);
+void process_file_name(char *, int, char **);
 void open_dat_file(char *);
 void read_directory(DIR *, char **);
-void load_config(struct Config *);
-void save_config(struct Config *);
+unsigned char load_config(void);
+unsigned char save_config(void);
+void cleanup(void);
 
 #endif
