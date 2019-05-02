@@ -9,9 +9,9 @@
 
 static const char st_title_welcome[] = "Life Tracker (c) Sauli Hirvi 2019";
 static const char st_title_date[] = "What date is it today?";
-static const char st_prompt_day[] = "Day: ";
-static const char st_prompt_month[] = "Month: ";
-static const char st_prompt_year[] = "Year: ";
+static const char st_prompt_day[] = "Day";
+static const char st_prompt_month[] = "Month";
+static const char st_prompt_year[] = "Year";
 
 static const char st_prompt_weight[] = "Weight: ";
 static const char st_prompt_lunch[] = "Food: ";
@@ -78,18 +78,35 @@ int main(void) {
     printf("%s\n", st_title_welcome);
     printf("%s\n", st_title_date);
 
-    printf("\n%s", st_prompt_year);
-    year = read_number();
+    year = 0;
+
+    while (year == 0) {
+        printf("\n%s [%d]:", st_prompt_year, config.year);
+        year = read_number();
+        if (year == 0 && config.year > 0) {
+            year = config.year;
+            break;
+        }
+    }
+
     month = 0;
     while (month < 1 || month > 12) {
-        printf("\n%s", st_prompt_month);
+        printf("\n%s [%d]:", st_prompt_month, config.month);
         month = (char)read_number();
+        if (month == 0 && config.month > 0) {
+            month = config.month;
+            break;
+        }
     }
 
     day = 0;
     while (day < 1 || day > 31) {
-        printf("\n%s", st_prompt_day);
+        printf("\n%s [%d]:", st_prompt_day, config.day);
         day = (char)read_number();
+        if (day == 0 && config.day > 0) {
+            day = config.day;
+            break;
+        }
     }
 
     printf("\n%s", st_prompt_weight);
@@ -126,6 +143,14 @@ int main(void) {
         printf("Error opening file\n");
     }
     fclose(fp);
+
+    status = save_config();
+
+    if (status == true) {
+        printf("\nConfig file saved.\n");
+    } else {
+        printf("\nError writing config file.\n");
+    }
 
     cleanup();
     return EXIT_SUCCESS;
