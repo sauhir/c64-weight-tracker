@@ -40,5 +40,8 @@ void read_directory(DIR *, char **);
 unsigned char load_config(void);
 unsigned char save_config(void);
 void cleanup(void);
-
+unsigned char main_menu(void);
+void list_directory(void);
+void new_entry(void);
+void open_file(char *);
 #endif

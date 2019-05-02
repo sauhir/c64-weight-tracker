@@ -7,7 +7,7 @@
 
 #include "diary.h"
 
-static const char st_title_welcome[] = "Life Tracker (c) Sauli Hirvi 2019";
+static const char st_title_welcome[] = "Weight Tracker (c) Sauli Hirvi 2019";
 static const char st_title_date[] = "What date is it today?";
 static const char st_prompt_day[] = "Day";
 static const char st_prompt_month[] = "Month";
@@ -45,37 +45,87 @@ unsigned char status;
 unsigned char days_in_month[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 int main(void) {
-    unsigned int i;
     clrscr();
 
     files = (char**)calloc(NUM_FILES, sizeof(char *));
     tokens = (char**)calloc(20, sizeof(char *));
 
-    read_directory(dp, files);
-
-    i = 0;
-    while (tmp_ptr = files[i]) {
-        printf("%d: %s\n", i, tmp_ptr);
-        i++;
-    }
-
-    /*
-    TODO:
-    - Read the contents of a file
-    - Parse contents of the file into an array of Entries
-    - Print out the Entries
-    */
-
     status = load_config();
 
     if (status == false) {
-        printf("\nConfig file not found.\n");
+        printf("\nConfig not loaded.\n");
     } else if (status == true) {
-        printf("\nConfig file found.\n");
-        printf("%d, %d, %d.\n", config.day, config.month, config.year);
+        printf("\nConfig loaded.\n");
     }
 
+    switch (main_menu()) {
+        case 1:
+            list_directory();
+            break;
+        case 2:
+            new_entry();
+            break;
+    }
+
+    status = save_config();
+
+    if (status == true) {
+        printf("\nConfig file saved.\n");
+    } else {
+        printf("\nError writing config file.\n");
+    }
+
+    cleanup();
+    return EXIT_SUCCESS;
+}
+
+/*
+ * Display main menu choice
+ */
+unsigned char main_menu(void) {
+    unsigned char input;
     printf("%s\n", st_title_welcome);
+
+    while (1) {
+        printf("\nDo you want to:\n");
+        printf("1) List existing entries\n");
+        printf("2) Add a new entry\n");
+        input = getchar() - 48;
+        printf("\n%d\n", input);
+        if (input == 1) {
+            return 1;
+        } else if (input == 2) {
+            return 2;
+        }
+    }
+}
+
+void list_directory(void) {
+    unsigned char i;
+    unsigned char input;
+    read_directory(dp, files);
+
+    printf("Available files:\n");
+
+    i = 0;
+    while (tmp_ptr = files[i]) {
+        printf("%d) %s\n", i+1, tmp_ptr);
+        i++;
+    }
+
+    input = 0;
+    while (input < 1 || input > files_length) {
+        printf("\nSelect file: ");
+        input = (char)read_number();
+    }
+    open_file(files[input-1]);
+}
+
+/*
+ * Make a new entry from user input.
+ */
+void new_entry(void) {
+
     printf("%s\n", st_title_date);
 
     year = 0;
@@ -117,19 +167,6 @@ int main(void) {
     /* Construct data file name */
     sprintf(filename, "%04d%02d.dat", year, month);
 
-    /*
-    fp = fopen(filename, "r");
-    if (fp == NULL) {
-        printf("Error opening file\n");
-    } else {
-        if (fgets(temp, 1024, fp) != NULL) {
-            puts(temp);
-        }
-    }
-
-    fclose(fp);
-    */
-
     sprintf(buffer, "%04d;%02d;%02d;%d;%d\n", year, month, day, weight->integer, weight->fraction);
 
     fp = fopen(filename, "a");
@@ -144,16 +181,6 @@ int main(void) {
     }
     fclose(fp);
 
-    status = save_config();
-
-    if (status == true) {
-        printf("\nConfig file saved.\n");
-    } else {
-        printf("\nError writing config file.\n");
-    }
-
-    cleanup();
-    return EXIT_SUCCESS;
 }
 
 /*
@@ -347,7 +374,6 @@ void read_directory(DIR *dp, char **files) {
     if (dp != NULL) {
         while (ep = readdir(dp)) {
             if (strstr(ep->d_name, ".dat")) {
-                printf("%s\n", ep->d_name);
                 process_file_name(ep->d_name, i, files);
                 i++;
                 files_length = i;
@@ -375,7 +401,7 @@ unsigned char load_config(void) {
             config.day = (unsigned char)atoi(tokens[2]);
             return true;
         } else {
-            close(fp);
+            fclose(fp);
             return false;
         }
     }
@@ -385,13 +411,32 @@ unsigned char load_config(void) {
  * Save configuration to disk.
  */
 unsigned char save_config(void) {
+    if (year ==0 || month == 0 || day == 0) {
+        return false;
+    }
     fp = fopen("config.cfg", "w");
     if (fp == NULL) {
         return false;
     } else {
         sprintf(buffer, "%04d;%02d;%02d", year, month, day);
         fputs(buffer, fp);
-        close(fp);
+        fclose(fp);
         return true;
     }
 }
+
+void open_file(char *filename) {
+    printf("\nOpening file: %s\n", filename);
+
+    fp = fopen(filename, "r");
+    if (fp == NULL) {
+        printf("Error opening file\n");
+    } else {
+        if (fgets(buffer, 1024, fp) != NULL) {
+            puts(buffer);
+        }
+    }
+    fclose(fp);
+}
+
+
