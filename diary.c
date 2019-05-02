@@ -28,7 +28,7 @@ FILE *fp;
 DIR *dp;
 struct dirent *ep;
 
-char filename[16];
+char filename[17];
 struct Decimal *weight;
 
 char *tmp_ptr;
