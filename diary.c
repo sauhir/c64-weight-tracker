@@ -231,6 +231,10 @@ void read_decimal(struct Decimal *decimal) {
             printf("%c", input);
             buffer[i] = input;
             ++i;
+        } else if (input == '.' || input == ',') {
+            printf("%c", input);
+            buffer[i] = input;
+            ++i;
         }
     }
 }
