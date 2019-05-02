@@ -2,7 +2,7 @@
 #ifndef __diary_h_
 #define __diary_h_
 
-#define BUF_LEN 10
+#define BUF_LEN 512
 
 #define FILENAME_LEN 16
 

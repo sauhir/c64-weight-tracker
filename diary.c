@@ -28,7 +28,6 @@ FILE *fp;
 DIR *dp;
 struct dirent *ep;
 
-char temp[1024];
 char filename[16];
 struct Decimal *weight;
 
@@ -114,7 +113,7 @@ int main(void) {
     fclose(fp);
     */
 
-    sprintf(temp, "%04d;%02d;%02d;%d;%d\n", year, month, day, weight->integer, weight->fraction);
+    sprintf(buffer, "%04d;%02d;%02d;%d;%d\n", year, month, day, weight->integer, weight->fraction);
 
     fp = fopen(filename, "a");
     if (!fp) {
@@ -122,7 +121,7 @@ int main(void) {
     }
 
     if (fp) {
-        fputs(temp, fp);
+        fputs(buffer, fp);
     } else {
         printf("Error opening file\n");
     }
@@ -343,8 +342,8 @@ unsigned char load_config(void) {
     if (fp == NULL) {
         return false;
     } else {
-        if (fgets(temp, 1024, fp) != NULL) {
-            parse_tokens(temp, tokens);
+        if (fgets(buffer, BUF_LEN, fp) != NULL) {
+            parse_tokens(buffer, tokens);
             close(fp);
             config.year = atoi(tokens[0]);
             config.month = (unsigned char)atoi(tokens[1]);
@@ -365,6 +364,8 @@ unsigned char save_config(void) {
     if (fp == NULL) {
         return false;
     } else {
+        sprintf(buffer, "%04d;%02d;%02d", year, month, day);
+        fputs(buffer, fp);
         close(fp);
         return true;
     }
