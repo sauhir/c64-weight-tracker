@@ -1,5 +1,6 @@
 #include <conio.h>
 #include <dirent.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -91,7 +92,6 @@ unsigned char main_menu(void) {
         printf("1) List existing entries\n");
         printf("2) Add a new entry\n");
         input = getchar() - 48;
-        printf("\n%d\n", input);
         if (input == 1) {
             return 1;
         } else if (input == 2) {
@@ -330,10 +330,26 @@ void parse_decimal(char *input, struct Decimal *output) {
  */
 void parse_entry(char *input, struct Entry *output) {
     char *token = NULL;
+    unsigned char i;
 
-    while (token = strtok(input, ";")) {
-        printf("token: %s\n", token);
+    struct Entry *entry = (struct Entry *)calloc(1, sizeof(struct Entry*));
+
+    for (token = strtok(input, ";"), i = 0; token; token = strtok(NULL, ";"), i++) {
+        if (i == 0) {
+            entry->year = atoi(token);
+        } else if (i == 1) {
+            entry->month = atoi(token);
+        } else if (i == 2) {
+            entry->day = atoi(token);
+        } else if (i == 3) {
+            entry->weight.integer = atoi(token);
+        } else if (i == 4) {
+            entry->weight.fraction = atoi(token);
+        }
     }
+    printf("%d-%02d-%02d: %3d.%d\n",
+        entry->year, entry->month, entry->day,
+        entry->weight.integer, entry->weight.fraction);
 }
 
 /*
@@ -356,7 +372,7 @@ void parse_tokens(char *input, char **output) {
  */
 void process_file_name(char *input, int idx, char **arr_ptr) {
     char *fn;
-    fn = (char*)calloc(strlen(input), sizeof(char));
+    fn = (char*)calloc(strlen(input)+1, sizeof(char));
     strcpy(fn, input);
     arr_ptr[idx] = fn;
 }
@@ -395,7 +411,7 @@ unsigned char load_config(void) {
     } else {
         if (fgets(buffer, BUF_LEN, fp) != NULL) {
             parse_tokens(buffer, tokens);
-            close(fp);
+            fclose(fp);
             config.year = atoi(tokens[0]);
             config.month = (unsigned char)atoi(tokens[1]);
             config.day = (unsigned char)atoi(tokens[2]);
@@ -426,14 +442,14 @@ unsigned char save_config(void) {
 }
 
 void open_file(char *filename) {
-    printf("\nOpening file: %s\n", filename);
+    printf("\nOpening file: '%s'\n", filename);
 
     fp = fopen(filename, "r");
     if (fp == NULL) {
-        printf("Error opening file\n");
+        printf("Error opening file: %d\n", errno);
     } else {
-        if (fgets(buffer, 1024, fp) != NULL) {
-            puts(buffer);
+        while (fgets(buffer, BUF_LEN, fp) != NULL) {
+            parse_entry(buffer, NULL);
         }
     }
     fclose(fp);
