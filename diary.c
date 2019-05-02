@@ -15,10 +15,6 @@ static const char st_prompt_month[] = "Month";
 static const char st_prompt_year[] = "Year";
 
 static const char st_prompt_weight[] = "Weight: ";
-static const char st_prompt_lunch[] = "Food: ";
-static const char st_prompt_alcohol[] = "Alcohol: ";
-static const char st_prompt_activity[] = "Activity: ";
-static const char st_prompt_rating[] = "Rating: ";
 
 unsigned char day;
 unsigned char month;
@@ -44,6 +40,9 @@ struct Config config;
 unsigned char status;
 
 unsigned char days_in_month[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+struct Entry entries[31];
+unsigned char entries_length;
 
 int main(void) {
     clrscr();
@@ -105,14 +104,13 @@ void list_directory(void) {
     unsigned char input;
     read_directory(dp, files);
 
-    printf("Available files:\n");
+    printf("\nAvailable files:\n");
 
     i = 0;
     while (tmp_ptr = files[i]) {
         printf("%d) %s\n", i+1, tmp_ptr);
         i++;
     }
-
     input = 0;
     while (input < 1 || input > files_length) {
         printf("\nSelect file: ");
@@ -332,24 +330,19 @@ void parse_entry(char *input, struct Entry *output) {
     char *token = NULL;
     unsigned char i;
 
-    struct Entry *entry = (struct Entry *)calloc(1, sizeof(struct Entry*));
-
     for (token = strtok(input, ";"), i = 0; token; token = strtok(NULL, ";"), i++) {
         if (i == 0) {
-            entry->year = atoi(token);
+            output->year = atoi(token);
         } else if (i == 1) {
-            entry->month = atoi(token);
+            output->month = atoi(token);
         } else if (i == 2) {
-            entry->day = atoi(token);
+            output->day = atoi(token);
         } else if (i == 3) {
-            entry->weight.integer = atoi(token);
+            output->weight.integer = atoi(token);
         } else if (i == 4) {
-            entry->weight.fraction = atoi(token);
+            output->weight.fraction = atoi(token);
         }
     }
-    printf("%d-%02d-%02d: %3d.%d\n",
-        entry->year, entry->month, entry->day,
-        entry->weight.integer, entry->weight.fraction);
 }
 
 /*
@@ -441,18 +434,54 @@ unsigned char save_config(void) {
     }
 }
 
+void print_entry(struct Entry *entry) {
+    printf("%d-%02d-%02d: %3d.%d\n",
+        entry->year, entry->month, entry->day,
+        entry->weight.integer, entry->weight.fraction);
+}
+
 void open_file(char *filename) {
+    unsigned char i;
     printf("\nOpening file: '%s'\n", filename);
 
+    i = 0;
     fp = fopen(filename, "r");
     if (fp == NULL) {
         printf("Error opening file: %d\n", errno);
     } else {
         while (fgets(buffer, BUF_LEN, fp) != NULL) {
-            parse_entry(buffer, NULL);
+            parse_entry(buffer, &entries[i++]);
         }
     }
     fclose(fp);
+    entries_length = i;
+
+    sort_entries(entries, entries_length);
+
+    for (i=0; i<entries_length; i++) {
+        print_entry(&entries[i]);
+    }
+}
+
+void swap_entries(struct Entry *a, struct Entry *b) {
+    struct Entry tmp;
+    tmp = *a;
+    *a = *b;
+    *b = tmp;
+}
+
+void sort_entries(struct Entry *array, unsigned char len) {
+    unsigned char i;
+    unsigned char changed = 0;
+    for (i=0; i<len-1; i++) {
+        if (array[i].day > array[i+1].day) {
+            swap_entries(&array[i], &array[i+1]);
+            changed = 1;
+        }
+    }
+    if (changed) {
+        sort_entries(array, len);
+    }
 }
 
 

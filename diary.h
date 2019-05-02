@@ -32,16 +32,23 @@ struct Entry {
 
 /* Function prototypes */
 unsigned int read_number(void);
-void read_decimal(struct Decimal *);
-void parse_decimal(char *, struct Decimal *);
-void process_file_name(char *, int, char **);
-void open_dat_file(char *);
-void read_directory(DIR *, char **);
-unsigned char load_config(void);
-unsigned char save_config(void);
-void cleanup(void);
 unsigned char main_menu(void);
 void list_directory(void);
 void new_entry(void);
+void cleanup(void);
+int is_valid_decimal(char *);
+unsigned int read_number(void);
+void read_decimal(struct Decimal *);
+void parse_decimal(char *, struct Decimal *);
+void parse_entry(char *, struct Entry *);
+void parse_tokens(char *, char **);
+void process_file_name(char *, int, char **);
+void read_directory(DIR *, char **);
+unsigned char load_config(void);
+unsigned char save_config(void);
+void print_entry(struct Entry *entry);
 void open_file(char *);
+void swap_entries(struct Entry *, struct Entry *);
+void sort_entries(struct Entry *, unsigned char);
+
 #endif
