@@ -1,6 +1,6 @@
 /* Weight Tracker 64
  *
- * Copyright (C) 2019 Sauli Hirvi
+ * Copyright (C) 2019 Tubular Softworks
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@
 
 #include "wtrack64.h"
 
-static const char st_title_welcome[] = "Weight Tracker 64 (c) Sauli Hirvi 2019";
+static const char st_title_welcome[] = "Weight Tracker 64 (c) Tubular Softworks 2019";
 static const char st_title_date[] = "What date is it today?";
 static const char st_prompt_day[] = "Day";
 static const char st_prompt_month[] = "Month";
