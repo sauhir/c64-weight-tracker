@@ -34,9 +34,6 @@ static const char st_prompt_year[] = "Year";
 
 static const char st_prompt_weight[] = "Weight: ";
 
-unsigned char day;
-unsigned char month;
-unsigned int year;
 unsigned char buffer[BUF_LEN];
 
 FILE *fp;
@@ -87,7 +84,7 @@ int main(void) {
             break;
     }
 
-    status = Config_save();
+    status = Config_save(&prev_date);
 
     if (status == true) {
         printf("\nConfig file saved.\n");
@@ -145,38 +142,40 @@ void view_directory_list(void) {
  * Make a new entry from user input.
  */
 void view_new_entry(void) {
-
+    struct Date new_date;
+    struct Entry entry;
     printf("%s\n", st_title_date);
 
-    Date_increment(&prev_date);
+    new_date = prev_date;
+    Date_increment(&new_date);
 
-    year = 0;
+    new_date.year = 0;
 
-    while (year == 0) {
+    while (new_date.year == 0) {
         printf("\n%s [%d]:", st_prompt_year, prev_date.year);
-        year = Input_get_integer();
-        if (year == 0 && prev_date.year > 0) {
-            year = prev_date.year;
+        new_date.year = Input_get_integer();
+        if (new_date.year == 0 && prev_date.year > 0) {
+            new_date.year = prev_date.year;
             break;
         }
     }
 
-    month = 0;
-    while (month < 1 || month > 12) {
+    new_date.month = 0;
+    while (new_date.month < 1 || new_date.month > 12) {
         printf("\n%s [%d]:", st_prompt_month, prev_date.month);
-        month = (char)Input_get_integer();
-        if (month == 0 && prev_date.month > 0) {
-            month = prev_date.month;
+        new_date.month = (char)Input_get_integer();
+        if (new_date.month == 0 && prev_date.month > 0) {
+            new_date.month = prev_date.month;
             break;
         }
     }
 
-    day = 0;
-    while (day < 1 || day > 31) {
+    new_date.day = 0;
+    while (new_date.day < 1 || new_date.day > 31) {
         printf("\n%s [%d]:", st_prompt_day, prev_date.day);
-        day = (char)Input_get_integer();
-        if (day == 0 && prev_date.day > 0) {
-            day = prev_date.day;
+        new_date.day = (char)Input_get_integer();
+        if (new_date.day == 0 && prev_date.day > 0) {
+            new_date.day = prev_date.day;
             break;
         }
     }
@@ -185,22 +184,10 @@ void view_new_entry(void) {
 
     weight = Input_get_decimal();
 
-    /* Construct data file name */
-    sprintf(filename, "%04d%02d.dat", year, month);
+    entry.weight10x = weight;
+    entry.date = new_date;
 
-    sprintf(buffer, "%04d;%02d;%02d;%4d\n", year, month, day, weight);
-
-    fp = fopen(filename, "a");
-    if (!fp) {
-        fp = fopen(filename, "w");
-    }
-
-    if (fp) {
-        fputs(buffer, fp);
-    } else {
-        printf("Error opening file\n");
-    }
-    fclose(fp);
+    Entry_save(&entry);
 }
 
 /*
@@ -450,15 +437,18 @@ unsigned char Config_load(void) {
 /*
  * Save configuration to disk.
  */
-unsigned char Config_save(void) {
-    if (year ==0 || month == 0 || day == 0) {
+unsigned char Config_save(struct Date *date) {
+    if (date == NULL) return false;
+
+    if (date->year ==0 || date->month == 0 || date->day == 0) {
         return false;
     }
+
     fp = fopen("config.cfg", "w");
     if (fp == NULL) {
         return false;
     } else {
-        sprintf(buffer, "%04d;%02d;%02d", year, month, day);
+        sprintf(buffer, "%04d;%02d;%02d", date->year, date->month, date->day);
         fputs(buffer, fp);
         fclose(fp);
         return true;
@@ -474,11 +464,11 @@ void Entry_parse(unsigned char *input, struct Entry *output) {
 
     for (token = strtok(input, ";"), i = 0; token; token = strtok(NULL, ";"), i++) {
         if (i == 0) {
-            output->year = atoi(token);
+            output->date.year = atoi(token);
         } else if (i == 1) {
-            output->month = atoi(token);
+            output->date.month = atoi(token);
         } else if (i == 2) {
-            output->day = atoi(token);
+            output->date.day = atoi(token);
         } else if (i == 3) {
             output->weight10x = atoi(token);
         }
@@ -493,8 +483,27 @@ void Entry_print(struct Entry *entry) {
     weight_str = Entry_format_weight(entry->weight10x);
 
     printf("%d-%02d-%02d: %s\n",
-        entry->year, entry->month, entry->day, weight_str);
+        entry->date.year, entry->date.month, entry->date.day, weight_str);
     free(weight_str);
+}
+
+void Entry_save(struct Entry *entry) {
+    /* Construct data file name */
+    sprintf(filename, "%04d%02d.dat", entry->date.year, entry->date.month);
+
+    sprintf(buffer, "%04d;%02d;%02d;%4d\n", entry->date.year, entry->date.month, entry->date.day, entry->weight10x);
+
+    fp = fopen(filename, "a");
+    if (!fp) {
+        fp = fopen(filename, "w");
+    }
+
+    if (fp) {
+        fputs(buffer, fp);
+    } else {
+        printf("Error opening file\n");
+    }
+    fclose(fp);
 }
 
 /*
@@ -514,7 +523,7 @@ void Entry_sort(struct Entry *array, unsigned char len) {
     unsigned char i;
     unsigned char changed = 0;
     for (i=0; i<len-1; i++) {
-        if (array[i].day > array[i+1].day) {
+        if (array[i].date.day > array[i+1].date.day) {
             Entry_swap(&array[i], &array[i+1]);
             changed = 1;
         }

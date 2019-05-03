@@ -35,9 +35,7 @@ struct Date {
 };
 
 struct Entry {
-    unsigned int year;
-    unsigned int month;
-    unsigned int day;
+    struct Date date;
     unsigned int weight10x;
 };
 
@@ -66,9 +64,10 @@ void Files_add_file(unsigned char *, unsigned int, unsigned char **);
 void Files_read_dir(DIR *, struct Files *);
 void Files_list_entries(unsigned char *);
 unsigned char Config_load(void);
-unsigned char Config_save(void);
+unsigned char Config_save(struct Date *);
 void Entry_parse(unsigned char *, struct Entry *);
-void Entry_print(struct Entry *entry);
+void Entry_print(struct Entry *);
+void Entry_save(struct Entry *);
 void Entry_swap(struct Entry *, struct Entry *);
 void Entry_sort(struct Entry *, unsigned char);
 char *Entry_format_weight(unsigned int);
