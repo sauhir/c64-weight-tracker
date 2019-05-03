@@ -39,6 +39,11 @@ struct Entry {
     unsigned int weight10x;
 };
 
+struct Entries {
+    struct Entry list[31];
+    unsigned char count;
+};
+
 struct Config {
     struct Date last_date;
     struct Entry max_weight;
@@ -49,6 +54,7 @@ struct Files {
     unsigned char *list[NUM_FILES];
     unsigned char count;
 };
+
 
 /* Function prototypes */
 unsigned char main_menu(void);
@@ -62,6 +68,7 @@ unsigned int Input_validate_decimal(unsigned char *);
 void Tokens_parse(unsigned char *, unsigned char **);
 void Files_add_file(unsigned char *, unsigned int, unsigned char **);
 void Files_read_dir(DIR *, struct Files *);
+void Files_load_entries(unsigned char *);
 void Files_list_entries(unsigned char *);
 unsigned char Config_load(void);
 unsigned char Config_save(struct Date *);
@@ -69,7 +76,7 @@ void Entry_parse(unsigned char *, struct Entry *);
 void Entry_print(struct Entry *);
 void Entry_save(struct Entry *);
 void Entry_swap(struct Entry *, struct Entry *);
-void Entry_sort(struct Entry *, unsigned char);
+void Entry_sort(struct Entries *);
 char *Entry_format_weight(unsigned int);
 void Date_increment(struct Date *);
 struct Date *Date_parse_filename(unsigned char *);

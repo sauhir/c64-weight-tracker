@@ -46,6 +46,7 @@ unsigned int weight;
 unsigned char *tmp_ptr;
 
 struct Files files;
+struct Entries entries;
 
 unsigned char *tokens[20];
 
@@ -64,9 +65,6 @@ unsigned char *month_names[] = {
     "Apr", "May", "Jun",
     "Jul", "Aug", "Sep",
     "Oct", "Nov", "Dec" };
-
-struct Entry entries[31];
-unsigned char entries_length;
 
 int main(void) {
     clrscr();
@@ -179,6 +177,12 @@ void view_new_entry(void) {
             break;
         }
     }
+
+    /* Load the file determined by new_date */
+
+    /* Check if the current entry already exists */
+
+    /* Rewrite the existing entry if exists */
 
     printf("\n%s", st_prompt_weight);
 
@@ -381,12 +385,13 @@ void Files_read_dir(DIR *dp, struct Files *files) {
     }
 }
 
+
 /*
  * Read entries from file and print them.
  */
-void Files_list_entries(unsigned char *filename) {
+void Files_load_entries(unsigned char *filename) {
     unsigned char i;
-    struct Date *date;
+
     printf("\nOpening file: '%s'\n", filename);
 
     i = 0;
@@ -395,20 +400,29 @@ void Files_list_entries(unsigned char *filename) {
         printf("Error opening file: %d\n", errno);
     } else {
         while (fgets(buffer, BUF_LEN, fp) != NULL) {
-            Entry_parse(buffer, &entries[i++]);
+            Entry_parse(buffer, &entries.list[i++]);
         }
     }
     fclose(fp);
-    entries_length = i;
+    entries.count = i;
+}
+
+/*
+ * Read entries from file and print them.
+ */
+void Files_list_entries(unsigned char *filename) {
+    unsigned char i;
+    struct Date *date;
+    Files_load_entries(filename);
 
     date = Date_parse_filename(filename);
 
     printf("Entries for %s %d:\n", month_names[date->month-1], date->year);
     free(date);
-    Entry_sort(entries, entries_length);
+    Entry_sort(&entries);
 
-    for (i=0; i<entries_length; i++) {
-        Entry_print(&entries[i]);
+    for (i=0; i<entries.count; i++) {
+        Entry_print(&entries.list[i]);
     }
 }
 
@@ -519,17 +533,17 @@ void Entry_swap(struct Entry *a, struct Entry *b) {
 /*
  * Sort entries based on day.
  */
-void Entry_sort(struct Entry *array, unsigned char len) {
+void Entry_sort(struct Entries *entries) {
     unsigned char i;
     unsigned char changed = 0;
-    for (i=0; i<len-1; i++) {
-        if (array[i].date.day > array[i+1].date.day) {
-            Entry_swap(&array[i], &array[i+1]);
+    for (i=0; i<entries->count-1; i++) {
+        if (entries->list[i].date.day > entries->list[i+1].date.day) {
+            Entry_swap(&entries->list[i], &entries->list[i+1]);
             changed = 1;
         }
     }
     if (changed) {
-        Entry_sort(array, len);
+        Entry_sort(entries);
     }
 }
 
