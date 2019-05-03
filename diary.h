@@ -30,6 +30,11 @@ struct Config {
     struct Entry min_weight;
 };
 
+struct Files {
+    unsigned char *list[NUM_FILES];
+    unsigned char count;
+};
+
 /* Function prototypes */
 unsigned int read_number(void);
 unsigned char main_menu(void);
@@ -42,7 +47,7 @@ unsigned int read_decimal(void);
 unsigned int parse_decimal(char *);
 void parse_tokens(char *, char **);
 void process_file_name(char *, int, char **);
-void read_directory(DIR *, char **);
+void read_directory(DIR *, struct Files *);
 unsigned char Config_load(void);
 unsigned char Config_save(void);
 void Entry_parse(char *, struct Entry *);

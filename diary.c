@@ -30,8 +30,7 @@ unsigned int weight;
 
 char *tmp_ptr;
 
-char *files[NUM_FILES];
-char files_length;
+struct Files files;
 
 char *tokens[20];
 
@@ -104,21 +103,21 @@ unsigned char main_menu(void) {
 void list_directory(void) {
     unsigned char i;
     unsigned char input;
-    read_directory(dp, files);
+    read_directory(dp, &files);
 
     printf("\n\nAvailable files:\n");
 
     i = 0;
-    while (tmp_ptr = files[i]) {
+    while (tmp_ptr = files.list[i]) {
         printf("%d) %s\n", i+1, tmp_ptr);
         i++;
     }
     input = 0;
-    while (input < 1 || input > files_length) {
+    while (input < 1 || input > files.count) {
         printf("\nSelect file: ");
         input = (char)read_number();
     }
-    open_file(files[input-1]);
+    open_file(files.list[input-1]);
 }
 
 /*
@@ -194,9 +193,9 @@ void cleanup() {
     free(tmp_ptr);
 
     for (i = 0; i < NUM_FILES ; i++) {
-        free(files[i]);
+        free(files.list[i]);
     }
-    free(files);
+    free(files.list);
 }
 
 /*
@@ -354,7 +353,7 @@ void process_file_name(char *input, int idx, char **arr_ptr) {
 /*
  * Read directory listing of .dat files into files.
  */
-void read_directory(DIR *dp, char **files) {
+void read_directory(DIR *dp, struct Files *files) {
     unsigned int i;
 
     dp = opendir (".");
@@ -364,9 +363,9 @@ void read_directory(DIR *dp, char **files) {
     if (dp != NULL) {
         while (ep = readdir(dp)) {
             if (strstr(ep->d_name, ".dat")) {
-                process_file_name(ep->d_name, i, files);
+                process_file_name(ep->d_name, i, files->list);
                 i++;
-                files_length = i;
+                files->count = i;
             }
         }
         closedir(dp);
