@@ -204,8 +204,11 @@ void View_new_entry(void) {
         entries.list[(entries.count)++] = entry;
     }
 
+    Entry_sort(&entries);
     /* Rewrite the existing entry if exists */
     Entry_save_month(new_date.year, new_date.month);
+
+    prev_date = entry.date;
 }
 
 /*
