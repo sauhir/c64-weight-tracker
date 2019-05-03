@@ -38,8 +38,8 @@ struct Files {
 /* Function prototypes */
 unsigned int read_number(void);
 unsigned char main_menu(void);
-void list_directory(void);
-void new_entry(void);
+void view_directory_list(void);
+void view_new_entry(void);
 void cleanup(void);
 int is_valid_decimal(char *);
 unsigned int read_number(void);

@@ -62,10 +62,10 @@ int main(void) {
 
     switch (main_menu()) {
         case 1:
-            list_directory();
+            directory_list_view();
             break;
         case 2:
-            new_entry();
+            new_entry_view();
             break;
     }
 
@@ -100,7 +100,7 @@ unsigned char main_menu(void) {
     }
 }
 
-void list_directory(void) {
+void directory_list_view(void) {
     unsigned char i;
     unsigned char input;
     read_directory(dp, &files);
@@ -123,7 +123,7 @@ void list_directory(void) {
 /*
  * Make a new entry from user input.
  */
-void new_entry(void) {
+void new_entry_view(void) {
 
     printf("%s\n", st_title_date);
 
