@@ -3,10 +3,10 @@
 ##############################################################################################
 
 all:
-	cl65 --standard c89 -O diary.c -o diary.prg
+	cl65 --standard c89 -Osir diary.c -o diary.prg
 
 run:
-	cl65 --standard c89 -O diary.c -o diary.prg && open diary.prg
+	cl65 --standard c89 -Osir diary.c -o diary.prg && open diary.prg
 
 clean:
 	$(RM) *.prg *.dat *.cfg
