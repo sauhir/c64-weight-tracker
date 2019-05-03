@@ -62,10 +62,10 @@ int main(void) {
 
     switch (main_menu()) {
         case 1:
-            directory_list_view();
+            view_directory_list();
             break;
         case 2:
-            new_entry_view();
+            view_new_entry();
             break;
     }
 
@@ -100,10 +100,10 @@ unsigned char main_menu(void) {
     }
 }
 
-void directory_list_view(void) {
+void view_directory_list(void) {
     unsigned char i;
     unsigned char input;
-    read_directory(dp, &files);
+    Files_read_dir(dp, &files);
 
     printf("\n\nAvailable files:\n");
 
@@ -115,15 +115,15 @@ void directory_list_view(void) {
     input = 0;
     while (input < 1 || input > files.count) {
         printf("\nSelect file: ");
-        input = (char)read_number();
+        input = (char)Input_get_integer();
     }
-    open_file(files.list[input-1]);
+    Files_list_entries(files.list[input-1]);
 }
 
 /*
  * Make a new entry from user input.
  */
-void new_entry_view(void) {
+void view_new_entry(void) {
 
     printf("%s\n", st_title_date);
 
@@ -133,7 +133,7 @@ void new_entry_view(void) {
 
     while (year == 0) {
         printf("\n%s [%d]:", st_prompt_year, prev_date.year);
-        year = read_number();
+        year = Input_get_integer();
         if (year == 0 && prev_date.year > 0) {
             year = prev_date.year;
             break;
@@ -143,7 +143,7 @@ void new_entry_view(void) {
     month = 0;
     while (month < 1 || month > 12) {
         printf("\n%s [%d]:", st_prompt_month, prev_date.month);
-        month = (char)read_number();
+        month = (char)Input_get_integer();
         if (month == 0 && prev_date.month > 0) {
             month = prev_date.month;
             break;
@@ -153,7 +153,7 @@ void new_entry_view(void) {
     day = 0;
     while (day < 1 || day > 31) {
         printf("\n%s [%d]:", st_prompt_day, prev_date.day);
-        day = (char)read_number();
+        day = (char)Input_get_integer();
         if (day == 0 && prev_date.day > 0) {
             day = prev_date.day;
             break;
@@ -162,7 +162,7 @@ void new_entry_view(void) {
 
     printf("\n%s", st_prompt_weight);
 
-    weight = read_decimal();
+    weight = Input_get_decimal();
 
     /* Construct data file name */
     sprintf(filename, "%04d%02d.dat", year, month);
@@ -199,29 +199,9 @@ void cleanup() {
 }
 
 /*
- * Validate that the passed string contains only numbers
- * or decimal separators.
- */
-int is_valid_decimal(char *input) {
-    char letter;
-    int i = 0;
-
-    while (letter = input[i++]) {
-        if (letter >= '0' && letter <= '9') {
-            continue;
-        } else if (letter == ',' || letter == '.') {
-            continue;
-        } else {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-/*
  * Read an integer from STDIN.
  */
-unsigned int read_number(void) {
+unsigned int Input_get_integer(void) {
     char input;
     unsigned char i;
     unsigned int num;
@@ -255,7 +235,7 @@ unsigned int read_number(void) {
 /*
  * Read a decimal number from STDIN.
  */
-unsigned int read_decimal(void) {
+unsigned int Input_get_decimal(void) {
     char input;
     unsigned char i;
 
@@ -272,7 +252,7 @@ unsigned int read_decimal(void) {
         }
 
         if (KEY_NEWLINE == input) {
-            return parse_decimal(buffer);
+            return Input_parse_decimal(buffer);
         }
         /* Ignore everything except numeric input */
         if (input >= '0' && input <= '9') {
@@ -290,7 +270,7 @@ unsigned int read_decimal(void) {
 /*
  * Parse a decimal number string into a Decimal struct.
  */
-unsigned int parse_decimal(char *input) {
+unsigned int Input_parse_decimal(char *input) {
     char letter;
     unsigned int i, j;
     char integer[5];
@@ -324,11 +304,30 @@ unsigned int parse_decimal(char *input) {
     return retval;
 }
 
+/*
+ * Validate that the passed string contains only numbers
+ * or decimal separators.
+ */
+int Input_validate_decimal(char *input) {
+    char letter;
+    int i = 0;
+
+    while (letter = input[i++]) {
+        if (letter >= '0' && letter <= '9') {
+            continue;
+        } else if (letter == ',' || letter == '.') {
+            continue;
+        } else {
+            return 1;
+        }
+    }
+    return 0;
+}
 
 /*
  * Parse tokens from a string delimited by semicolons.
  */
-void parse_tokens(char *input, char **output) {
+void Tokens_parse(char *input, char **output) {
     char *in_token = NULL;
     char *out_token;
     unsigned char i;
@@ -343,7 +342,7 @@ void parse_tokens(char *input, char **output) {
 /*
  * Allocates and adds filename to array.
  */
-void process_file_name(char *input, int idx, char **arr_ptr) {
+void Files_add_file(char *input, int idx, char **arr_ptr) {
     char *fn;
     fn = (char*)calloc(strlen(input)+1, sizeof(char));
     strcpy(fn, input);
@@ -353,7 +352,7 @@ void process_file_name(char *input, int idx, char **arr_ptr) {
 /*
  * Read directory listing of .dat files into files.
  */
-void read_directory(DIR *dp, struct Files *files) {
+void Files_read_dir(DIR *dp, struct Files *files) {
     unsigned int i;
 
     dp = opendir (".");
@@ -363,7 +362,7 @@ void read_directory(DIR *dp, struct Files *files) {
     if (dp != NULL) {
         while (ep = readdir(dp)) {
             if (strstr(ep->d_name, ".dat")) {
-                process_file_name(ep->d_name, i, files->list);
+                Files_add_file(ep->d_name, i, files->list);
                 i++;
                 files->count = i;
             }
@@ -371,6 +370,34 @@ void read_directory(DIR *dp, struct Files *files) {
         closedir(dp);
     } else {
         printf("Error opening directory\n");
+    }
+}
+
+void Files_list_entries(char *filename) {
+    unsigned char i;
+    struct Date *date;
+    printf("\nOpening file: '%s'\n", filename);
+
+    i = 0;
+    fp = fopen(filename, "r");
+    if (fp == NULL) {
+        printf("Error opening file: %d\n", errno);
+    } else {
+        while (fgets(buffer, BUF_LEN, fp) != NULL) {
+            Entry_parse(buffer, &entries[i++]);
+        }
+    }
+    fclose(fp);
+    entries_length = i;
+
+    date = date_from_filename(filename);
+
+    printf("Entries for %s %d:\n", month_names[date->month-1], date->year);
+    free(date);
+    Entry_sort(entries, entries_length);
+
+    for (i=0; i<entries_length; i++) {
+        Entry_print(&entries[i]);
     }
 }
 
@@ -383,7 +410,7 @@ unsigned char Config_load(void) {
         return false;
     } else {
         if (fgets(buffer, BUF_LEN, fp) != NULL) {
-            parse_tokens(buffer, tokens);
+            Tokens_parse(buffer, tokens);
             fclose(fp);
             prev_date.year = atoi(tokens[0]);
             prev_date.month = (unsigned char)atoi(tokens[1]);
@@ -465,34 +492,6 @@ void Entry_sort(struct Entry *array, unsigned char len) {
     }
 }
 
-void open_file(char *filename) {
-    unsigned char i;
-    struct Date *date;
-    printf("\nOpening file: '%s'\n", filename);
-
-    i = 0;
-    fp = fopen(filename, "r");
-    if (fp == NULL) {
-        printf("Error opening file: %d\n", errno);
-    } else {
-        while (fgets(buffer, BUF_LEN, fp) != NULL) {
-            Entry_parse(buffer, &entries[i++]);
-        }
-    }
-    fclose(fp);
-    entries_length = i;
-
-    date = date_from_filename(filename);
-
-    printf("Entries for %s %d:\n", month_names[date->month-1], date->year);
-    free(date);
-    Entry_sort(entries, entries_length);
-
-    for (i=0; i<entries_length; i++) {
-        Entry_print(&entries[i]);
-    }
-}
-
 void Date_increment(struct Date *date) {
     if (date->year ==0 || date->month == 0 || date->day == 0) {
         return;
@@ -546,4 +545,3 @@ struct Date *date_from_filename(unsigned char *filename) {
     free(month);
     return date;
 }
-

@@ -36,25 +36,25 @@ struct Files {
 };
 
 /* Function prototypes */
-unsigned int read_number(void);
+unsigned int Input_get_integer(void);
 unsigned char main_menu(void);
 void view_directory_list(void);
 void view_new_entry(void);
 void cleanup(void);
-int is_valid_decimal(char *);
-unsigned int read_number(void);
-unsigned int read_decimal(void);
-unsigned int parse_decimal(char *);
-void parse_tokens(char *, char **);
-void process_file_name(char *, int, char **);
-void read_directory(DIR *, struct Files *);
+unsigned int Input_get_integer(void);
+unsigned int Input_get_decimal(void);
+unsigned int Input_parse_decimal(char *);
+int Input_validate_decimal(char *);
+void Tokens_parse(char *, char **);
+void Files_add_file(char *, int, char **);
+void Files_read_dir(DIR *, struct Files *);
+void Files_list_entries(char *);
 unsigned char Config_load(void);
 unsigned char Config_save(void);
 void Entry_parse(char *, struct Entry *);
 void Entry_print(struct Entry *entry);
 void Entry_swap(struct Entry *, struct Entry *);
 void Entry_sort(struct Entry *, unsigned char);
-void open_file(char *);
 void Date_increment(struct Date *);
 char *format_weight_str(unsigned int);
 struct Date *date_from_filename(unsigned char *);
