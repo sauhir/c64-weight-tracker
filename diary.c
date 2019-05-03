@@ -26,7 +26,7 @@ DIR *dp;
 struct dirent *ep;
 
 char filename[17];
-struct Decimal *weight;
+unsigned int weight;
 
 char *tmp_ptr;
 
@@ -39,9 +39,17 @@ struct Date prev_date;
 
 unsigned char status;
 
-unsigned char days_in_month[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+unsigned char days_in_month[] = {
+    31, 28, 31,
+    30, 31, 30,
+    31, 31, 30,
+    31, 30, 31 };
 
-unsigned char *month_names[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+unsigned char *month_names[] = {
+    "Jan", "Feb", "Mar",
+    "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep",
+    "Oct", "Nov", "Dec" };
 
 struct Entry entries[31];
 unsigned char entries_length;
@@ -98,7 +106,7 @@ void list_directory(void) {
     unsigned char input;
     read_directory(dp, files);
 
-    printf("\nAvailable files:\n");
+    printf("\n\nAvailable files:\n");
 
     i = 0;
     while (tmp_ptr = files[i]) {
@@ -155,13 +163,12 @@ void new_entry(void) {
 
     printf("\n%s", st_prompt_weight);
 
-    weight = (struct Decimal *)calloc(1, sizeof(struct Decimal));
-    read_decimal(weight);
+    weight = read_decimal();
 
     /* Construct data file name */
     sprintf(filename, "%04d%02d.dat", year, month);
 
-    sprintf(buffer, "%04d;%02d;%02d;%d;%d\n", year, month, day, weight->integer, weight->fraction);
+    sprintf(buffer, "%04d;%02d;%02d;%4d\n", year, month, day, weight);
 
     fp = fopen(filename, "a");
     if (!fp) {
@@ -185,7 +192,6 @@ void cleanup() {
     free(dp);
     free(ep);
     free(tmp_ptr);
-    free(weight);
 
     for (i = 0; i < NUM_FILES ; i++) {
         free(files[i]);
@@ -250,7 +256,7 @@ unsigned int read_number(void) {
 /*
  * Read a decimal number from STDIN.
  */
-void read_decimal(struct Decimal *decimal) {
+unsigned int read_decimal(void) {
     char input;
     unsigned char i;
 
@@ -267,8 +273,7 @@ void read_decimal(struct Decimal *decimal) {
         }
 
         if (KEY_NEWLINE == input) {
-            parse_decimal(buffer, decimal);
-            return;
+            return parse_decimal(buffer);
         }
         /* Ignore everything except numeric input */
         if (input >= '0' && input <= '9') {
@@ -286,11 +291,12 @@ void read_decimal(struct Decimal *decimal) {
 /*
  * Parse a decimal number string into a Decimal struct.
  */
-void parse_decimal(char *input, struct Decimal *output) {
+unsigned int parse_decimal(char *input) {
     char letter;
     unsigned int i, j;
     char integer[5];
     char decimal[5];
+    unsigned int retval = 0;
 
     memset(integer, 0, sizeof integer);
     memset(decimal, 0, sizeof decimal);
@@ -314,8 +320,9 @@ void parse_decimal(char *input, struct Decimal *output) {
         }
     }
 
-    output->integer = atoi(integer);
-    output->fraction = atoi(decimal);
+    retval = atoi(integer) * 10;
+    retval += atoi(decimal);
+    return retval;
 }
 
 /*
@@ -333,9 +340,7 @@ void parse_entry(char *input, struct Entry *output) {
         } else if (i == 2) {
             output->day = atoi(token);
         } else if (i == 3) {
-            output->weight.integer = atoi(token);
-        } else if (i == 4) {
-            output->weight.fraction = atoi(token);
+            output->weight = atoi(token);
         }
     }
 }
@@ -430,13 +435,17 @@ unsigned char save_config(void) {
 }
 
 void print_entry(struct Entry *entry) {
-    printf("%d-%02d-%02d: %3d.%d\n",
-        entry->year, entry->month, entry->day,
-        entry->weight.integer, entry->weight.fraction);
+    char *weight_str;
+    weight_str = format_weight_str(entry->weight);
+
+    printf("%d-%02d-%02d: %s\n",
+        entry->year, entry->month, entry->day, weight_str);
+    free(weight_str);
 }
 
 void open_file(char *filename) {
     unsigned char i;
+    struct Date *date;
     printf("\nOpening file: '%s'\n", filename);
 
     i = 0;
@@ -451,6 +460,10 @@ void open_file(char *filename) {
     fclose(fp);
     entries_length = i;
 
+    date = date_from_filename(filename);
+
+    printf("Entries for %s %d:\n", month_names[date->month-1], date->year);
+    free(date);
     sort_entries(entries, entries_length);
 
     for (i=0; i<entries_length; i++) {
@@ -496,4 +509,40 @@ void increment_date(struct Date *date) {
     }
 }
 
+char *format_weight_str(unsigned int weight) {
+    unsigned char integer;
+    unsigned char decimal;
+    unsigned char *str;
+
+    str = (unsigned char *)calloc(5, sizeof(char));
+    integer = weight / 10;
+    decimal = weight % integer;
+    sprintf(str, "%d.%d", integer, decimal);
+    return str;
+}
+
+struct Date *date_from_filename(unsigned char *filename) {
+    unsigned char *year, *month;
+    unsigned char i;
+    struct Date *date;
+
+    year = (unsigned char *)calloc(4+1, sizeof(char*));
+    month = (unsigned char *)calloc(2+1, sizeof(char*));
+    date = (struct Date *)calloc(1, sizeof(struct Date *));
+
+    for (i=0; i<4; i++) {
+        year[i] = filename[i];
+    }
+    for (i=0; i<2; i++) {
+        month[i] = filename[i+4];
+    }
+
+    date->year = atoi(year);
+    date->month = atoi(month);
+    date->day = 0;
+
+    free(year);
+    free(month);
+    return date;
+}
 

@@ -17,16 +17,17 @@ struct Date {
     unsigned int year;
 };
 
-struct Decimal {
-    unsigned int integer;
-    unsigned int fraction;
-};
-
 struct Entry {
     unsigned int year;
     unsigned int month;
     unsigned int day;
-    struct Decimal weight;
+    unsigned int weight;
+};
+
+struct Config {
+    struct Date last_date;
+    struct Entry max_weight;
+    struct Entry min_weight;
 };
 
 /* Function prototypes */
@@ -37,8 +38,8 @@ void new_entry(void);
 void cleanup(void);
 int is_valid_decimal(char *);
 unsigned int read_number(void);
-void read_decimal(struct Decimal *);
-void parse_decimal(char *, struct Decimal *);
+unsigned int read_decimal(void);
+unsigned int parse_decimal(char *);
 void parse_entry(char *, struct Entry *);
 void parse_tokens(char *, char **);
 void process_file_name(char *, int, char **);
@@ -50,5 +51,6 @@ void open_file(char *);
 void swap_entries(struct Entry *, struct Entry *);
 void sort_entries(struct Entry *, unsigned char);
 void increment_date(struct Date *);
-
+char *format_weight_str(unsigned int);
+struct Date *date_from_filename(unsigned char *);
 #endif
