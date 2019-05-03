@@ -56,6 +56,6 @@ void Entry_print(struct Entry *entry);
 void Entry_swap(struct Entry *, struct Entry *);
 void Entry_sort(struct Entry *, unsigned char);
 void Date_increment(struct Date *);
-char *format_weight_str(unsigned int);
 struct Date *Date_parse_filename(unsigned char *);
+char *format_weight_str(unsigned int);
 #endif

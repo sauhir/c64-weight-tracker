@@ -100,6 +100,9 @@ unsigned char main_menu(void) {
     }
 }
 
+/*
+ * Display directory list menu
+ */
 void view_directory_list(void) {
     unsigned char i;
     unsigned char input;
@@ -373,6 +376,9 @@ void Files_read_dir(DIR *dp, struct Files *files) {
     }
 }
 
+/*
+ * Read entries from file and print them.
+ */
 void Files_list_entries(unsigned char *filename) {
     unsigned char i;
     struct Date *date;
@@ -461,6 +467,9 @@ void Entry_parse(unsigned char *input, struct Entry *output) {
     }
 }
 
+/*
+ * Print formatted entry.
+ */
 void Entry_print(struct Entry *entry) {
     char *weight_str;
     weight_str = format_weight_str(entry->weight10x);
@@ -470,7 +479,9 @@ void Entry_print(struct Entry *entry) {
     free(weight_str);
 }
 
-
+/*
+ * Swap entry pointers.
+ */
 void Entry_swap(struct Entry *a, struct Entry *b) {
     struct Entry tmp;
     tmp = *a;
@@ -478,6 +489,9 @@ void Entry_swap(struct Entry *a, struct Entry *b) {
     *b = tmp;
 }
 
+/*
+ * Sort entries based on day.
+ */
 void Entry_sort(struct Entry *array, unsigned char len) {
     unsigned char i;
     unsigned char changed = 0;
@@ -492,6 +506,9 @@ void Entry_sort(struct Entry *array, unsigned char len) {
     }
 }
 
+/*
+ * Increment the date based on number of days per month.
+ */
 void Date_increment(struct Date *date) {
     if (date->year ==0 || date->month == 0 || date->day == 0) {
         return;
@@ -507,21 +524,6 @@ void Date_increment(struct Date *date) {
         date->month = 1;
         date->year++;
     }
-}
-
-/*
- * Format 10x weight integer into a decimal string.
- */
-unsigned char *format_weight_str(unsigned int weight) {
-    unsigned char integer;
-    unsigned char decimal;
-    unsigned char *str;
-
-    str = (unsigned char *)calloc(5, sizeof(char));
-    integer = weight / 10;
-    decimal = weight % integer;
-    sprintf(str, "%d.%d", integer, decimal);
-    return str;
 }
 
 /*
@@ -550,4 +552,19 @@ struct Date *Date_parse_filename(unsigned char *filename) {
     free(year);
     free(month);
     return date;
+}
+
+/*
+ * Format 10x weight integer into a decimal string.
+ */
+unsigned char *format_weight_str(unsigned int weight) {
+    unsigned char integer;
+    unsigned char decimal;
+    unsigned char *str;
+
+    str = (unsigned char *)calloc(5, sizeof(char));
+    integer = weight / 10;
+    decimal = weight % integer;
+    sprintf(str, "%d.%d", integer, decimal);
+    return str;
 }
