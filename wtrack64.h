@@ -57,9 +57,9 @@ struct Files {
 
 
 /* Function prototypes */
-unsigned char main_menu(void);
-void view_directory_list(void);
-void view_new_entry(void);
+unsigned char View_main_menu(void);
+void View_directory_list(void);
+void View_new_entry(void);
 void cleanup(void);
 unsigned int Input_get_integer(void);
 unsigned int Input_get_decimal(void);
@@ -68,13 +68,15 @@ unsigned int Input_validate_decimal(unsigned char *);
 void Tokens_parse(unsigned char *, unsigned char **);
 void Files_add_file(unsigned char *, unsigned int, unsigned char **);
 void Files_read_dir(DIR *, struct Files *);
-void Files_load_entries(unsigned char *);
+bool Files_load_entries(unsigned char *);
 void Files_list_entries(unsigned char *);
 unsigned char Config_load(void);
 unsigned char Config_save(struct Date *);
 void Entry_parse(unsigned char *, struct Entry *);
 void Entry_print(struct Entry *);
+void Entry_save_month(unsigned int, unsigned char);
 void Entry_save(struct Entry *);
+struct Entry *Entry_find(struct Date *);
 void Entry_swap(struct Entry *, struct Entry *);
 void Entry_sort(struct Entries *);
 char *Entry_format_weight(unsigned int);

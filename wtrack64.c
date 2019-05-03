@@ -73,12 +73,12 @@ int main(void) {
 
     printf("Free mem: %zu\n", _heapmemavail());
 
-    switch (main_menu()) {
+    switch (View_main_menu()) {
         case 1:
-            view_directory_list();
+            View_directory_list();
             break;
         case 2:
-            view_new_entry();
+            View_new_entry();
             break;
     }
 
@@ -95,7 +95,7 @@ int main(void) {
 /*
  * Display main menu choice
  */
-unsigned char main_menu(void) {
+unsigned char View_main_menu(void) {
     unsigned char input;
     printf("%s\n", st_title_welcome);
 
@@ -116,7 +116,7 @@ unsigned char main_menu(void) {
 /*
  * Display directory list menu
  */
-void view_directory_list(void) {
+void View_directory_list(void) {
     unsigned char i;
     unsigned char input;
     Files_read_dir(dp, &files);
@@ -139,11 +139,15 @@ void view_directory_list(void) {
 /*
  * Make a new entry from user input.
  */
-void view_new_entry(void) {
+void View_new_entry(void) {
     struct Date new_date;
     struct Entry entry;
+    struct Entry *old_entry;
+    bool status;
+    unsigned char filename[17];
     printf("%s\n", st_title_date);
 
+    old_entry = NULL;
     new_date = prev_date;
     Date_increment(&new_date);
 
@@ -178,20 +182,30 @@ void view_new_entry(void) {
         }
     }
 
-    /* Load the file determined by new_date */
-
-    /* Check if the current entry already exists */
-
-    /* Rewrite the existing entry if exists */
-
     printf("\n%s", st_prompt_weight);
-
     weight = Input_get_decimal();
 
     entry.weight10x = weight;
     entry.date = new_date;
 
-    Entry_save(&entry);
+    /* Load the file determined by new_date */
+    sprintf(filename, "%04d%02d.dat",
+        new_date.year, new_date.month);
+    status = Files_load_entries(filename);
+
+    /* Check if the current entry already exists */
+    if (status == true) {
+        old_entry = Entry_find(&new_date);
+    }
+
+    if (old_entry != NULL) {
+        old_entry->weight10x = entry.weight10x;
+    } else {
+        entries.list[(entries.count)++] = entry;
+    }
+
+    /* Rewrite the existing entry if exists */
+    Entry_save_month(new_date.year, new_date.month);
 }
 
 /*
@@ -385,11 +399,10 @@ void Files_read_dir(DIR *dp, struct Files *files) {
     }
 }
 
-
 /*
  * Read entries from file and print them.
  */
-void Files_load_entries(unsigned char *filename) {
+bool Files_load_entries(unsigned char *filename) {
     unsigned char i;
 
     printf("\nOpening file: '%s'\n", filename);
@@ -398,6 +411,7 @@ void Files_load_entries(unsigned char *filename) {
     fp = fopen(filename, "r");
     if (fp == NULL) {
         printf("Error opening file: %d\n", errno);
+        return false;
     } else {
         while (fgets(buffer, BUF_LEN, fp) != NULL) {
             Entry_parse(buffer, &entries.list[i++]);
@@ -405,6 +419,7 @@ void Files_load_entries(unsigned char *filename) {
     }
     fclose(fp);
     entries.count = i;
+    return true;
 }
 
 /*
@@ -501,6 +516,30 @@ void Entry_print(struct Entry *entry) {
     free(weight_str);
 }
 
+/*
+ * Save entries for one month to disk.
+ */
+void Entry_save_month(unsigned int year, unsigned char month) {
+    unsigned char i;
+    /* Construct data file name */
+    sprintf(filename, "%04d%02d.dat", year, month);
+
+    fp = fopen(filename, "w");
+
+    if (fp) {
+        for (i=0; i<entries.count; i++) {
+            sprintf(buffer, "%04d;%02d;%02d;%4d\n", entries.list[i].date.year, entries.list[i].date.month, entries.list[i].date.day, entries.list[i].weight10x);
+            fputs(buffer, fp);
+        }
+    } else {
+        printf("Error opening file\n");
+    }
+    fclose(fp);
+}
+
+/*
+ * Save entry to disk.
+ */
 void Entry_save(struct Entry *entry) {
     /* Construct data file name */
     sprintf(filename, "%04d%02d.dat", entry->date.year, entry->date.month);
@@ -518,6 +557,24 @@ void Entry_save(struct Entry *entry) {
         printf("Error opening file\n");
     }
     fclose(fp);
+}
+
+/*
+ * Find an entry based on date.
+ */
+struct Entry *Entry_find(struct Date *date) {
+    unsigned char i;
+    bool is_equal = true;
+
+    for (i=0; i<entries.count; i++) {
+        if (entries.list[i].date.day != date->day) is_equal = false;
+        if (entries.list[i].date.month != date->month) is_equal = false;
+        if (entries.list[i].date.year != date->year) is_equal = false;
+        if (is_equal == true) {
+            return &entries.list[i];
+        }
+    }
+    return NULL;
 }
 
 /*
