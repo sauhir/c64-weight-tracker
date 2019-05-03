@@ -1,6 +1,6 @@
 
 # Weight Tracker 64
-A Commodore 64 program to track your weight.
+A Commodore 64 program to track your weight. Written in ANSI-C for the CC65 compiler.
 
 The program is still heavily under construction. The basic functionality is as follows: You can list existing entries by month and input new entries.
 
