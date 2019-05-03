@@ -148,8 +148,8 @@ void View_new_entry(void) {
     printf("%s\n", st_title_date);
 
     old_entry = NULL;
+    Date_increment(&prev_date);
     new_date = prev_date;
-    Date_increment(&new_date);
 
     new_date.year = 0;
 
