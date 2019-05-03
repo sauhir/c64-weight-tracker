@@ -472,7 +472,7 @@ void Entry_parse(unsigned char *input, struct Entry *output) {
  */
 void Entry_print(struct Entry *entry) {
     char *weight_str;
-    weight_str = format_weight_str(entry->weight10x);
+    weight_str = Entry_format_weight(entry->weight10x);
 
     printf("%d-%02d-%02d: %s\n",
         entry->year, entry->month, entry->day, weight_str);
@@ -504,6 +504,21 @@ void Entry_sort(struct Entry *array, unsigned char len) {
     if (changed) {
         Entry_sort(array, len);
     }
+}
+
+/*
+ * Format 10x weight integer into a decimal string.
+ */
+unsigned char *Entry_format_weight(unsigned int weight) {
+    unsigned char integer;
+    unsigned char decimal;
+    unsigned char *str;
+
+    str = (unsigned char *)calloc(5, sizeof(char));
+    integer = weight / 10;
+    decimal = weight % integer;
+    sprintf(str, "%d.%d", integer, decimal);
+    return str;
 }
 
 /*
@@ -554,17 +569,3 @@ struct Date *Date_parse_filename(unsigned char *filename) {
     return date;
 }
 
-/*
- * Format 10x weight integer into a decimal string.
- */
-unsigned char *format_weight_str(unsigned int weight) {
-    unsigned char integer;
-    unsigned char decimal;
-    unsigned char *str;
-
-    str = (unsigned char *)calloc(5, sizeof(char));
-    integer = weight / 10;
-    decimal = weight % integer;
-    sprintf(str, "%d.%d", integer, decimal);
-    return str;
-}
