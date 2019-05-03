@@ -3,16 +3,15 @@
 #define __diary_h_
 
 #define BUF_LEN 512
-
 #define FILENAME_LEN 16
+#define NUM_FILES 24
 
-static const unsigned char NUM_FILES = 24;
 static const unsigned char MAX_DAYS_IN_MONTH = 31;
 
 static const char KEY_NEWLINE = 13;
 static const char KEY_BACKSPACE = 20;
 
-struct Config {
+struct Date {
     unsigned char day;
     unsigned char month;
     unsigned int year;
@@ -50,5 +49,6 @@ void print_entry(struct Entry *entry);
 void open_file(char *);
 void swap_entries(struct Entry *, struct Entry *);
 void sort_entries(struct Entry *, unsigned char);
+void increment_date(struct Date *);
 
 #endif

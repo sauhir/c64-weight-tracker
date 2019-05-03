@@ -8,7 +8,7 @@
 
 #include "diary.h"
 
-static const char st_title_welcome[] = "Weight Tracker (c) Sauli Hirvi 2019";
+static const char st_title_welcome[] = "Weight Tracker 64 (c) Sauli Hirvi 2019";
 static const char st_title_date[] = "What date is it today?";
 static const char st_prompt_day[] = "Day";
 static const char st_prompt_month[] = "Month";
@@ -30,16 +30,18 @@ struct Decimal *weight;
 
 char *tmp_ptr;
 
-char **files;
+char *files[NUM_FILES];
 char files_length;
 
-char **tokens;
+char *tokens[20];
 
-struct Config config;
+struct Date prev_date;
 
 unsigned char status;
 
 unsigned char days_in_month[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+unsigned char *month_names[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
 struct Entry entries[31];
 unsigned char entries_length;
@@ -47,16 +49,9 @@ unsigned char entries_length;
 int main(void) {
     clrscr();
 
-    files = (char**)calloc(NUM_FILES, sizeof(char *));
-    tokens = (char**)calloc(20, sizeof(char *));
+    (void)load_config();
 
-    status = load_config();
-
-    if (status == false) {
-        printf("\nConfig not loaded.\n");
-    } else if (status == true) {
-        printf("\nConfig loaded.\n");
-    }
+    printf("Free mem: %zu\n", _heapmemavail());
 
     switch (main_menu()) {
         case 1:
@@ -71,8 +66,6 @@ int main(void) {
 
     if (status == true) {
         printf("\nConfig file saved.\n");
-    } else {
-        printf("\nError writing config file.\n");
     }
 
     cleanup();
@@ -90,10 +83,11 @@ unsigned char main_menu(void) {
         printf("\nDo you want to:\n");
         printf("1) List existing entries\n");
         printf("2) Add a new entry\n");
-        input = getchar() - 48;
-        if (input == 1) {
+        printf("Choose: ");
+        input = cgetc();
+        if (input == '1') {
             return 1;
-        } else if (input == 2) {
+        } else if (input == '2') {
             return 2;
         }
     }
@@ -126,33 +120,35 @@ void new_entry(void) {
 
     printf("%s\n", st_title_date);
 
+    increment_date(&prev_date);
+
     year = 0;
 
     while (year == 0) {
-        printf("\n%s [%d]:", st_prompt_year, config.year);
+        printf("\n%s [%d]:", st_prompt_year, prev_date.year);
         year = read_number();
-        if (year == 0 && config.year > 0) {
-            year = config.year;
+        if (year == 0 && prev_date.year > 0) {
+            year = prev_date.year;
             break;
         }
     }
 
     month = 0;
     while (month < 1 || month > 12) {
-        printf("\n%s [%d]:", st_prompt_month, config.month);
+        printf("\n%s [%d]:", st_prompt_month, prev_date.month);
         month = (char)read_number();
-        if (month == 0 && config.month > 0) {
-            month = config.month;
+        if (month == 0 && prev_date.month > 0) {
+            month = prev_date.month;
             break;
         }
     }
 
     day = 0;
     while (day < 1 || day > 31) {
-        printf("\n%s [%d]:", st_prompt_day, config.day);
+        printf("\n%s [%d]:", st_prompt_day, prev_date.day);
         day = (char)read_number();
-        if (day == 0 && config.day > 0) {
-            day = config.day;
+        if (day == 0 && prev_date.day > 0) {
+            day = prev_date.day;
             break;
         }
     }
@@ -178,7 +174,6 @@ void new_entry(void) {
         printf("Error opening file\n");
     }
     fclose(fp);
-
 }
 
 /*
@@ -192,7 +187,7 @@ void cleanup() {
     free(tmp_ptr);
     free(weight);
 
-    for (i = 0; i < files_length ; i++) {
+    for (i = 0; i < NUM_FILES ; i++) {
         free(files[i]);
     }
     free(files);
@@ -405,9 +400,9 @@ unsigned char load_config(void) {
         if (fgets(buffer, BUF_LEN, fp) != NULL) {
             parse_tokens(buffer, tokens);
             fclose(fp);
-            config.year = atoi(tokens[0]);
-            config.month = (unsigned char)atoi(tokens[1]);
-            config.day = (unsigned char)atoi(tokens[2]);
+            prev_date.year = atoi(tokens[0]);
+            prev_date.month = (unsigned char)atoi(tokens[1]);
+            prev_date.day = (unsigned char)atoi(tokens[2]);
             return true;
         } else {
             fclose(fp);
@@ -481,6 +476,23 @@ void sort_entries(struct Entry *array, unsigned char len) {
     }
     if (changed) {
         sort_entries(array, len);
+    }
+}
+
+void increment_date(struct Date *date) {
+    if (date->year ==0 || date->month == 0 || date->day == 0) {
+        return;
+    }
+
+    date->day++;
+
+    if (date->day > days_in_month[date->month-1]) {
+        date->day = 1;
+        date->month++;
+    }
+    if (date->month > 12) {
+        date->month = 1;
+        date->year++;
     }
 }
 
