@@ -36,7 +36,6 @@ struct Files {
 };
 
 /* Function prototypes */
-unsigned int Input_get_integer(void);
 unsigned char main_menu(void);
 void view_directory_list(void);
 void view_new_entry(void);
