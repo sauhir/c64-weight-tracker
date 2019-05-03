@@ -57,7 +57,7 @@ unsigned char entries_length;
 int main(void) {
     clrscr();
 
-    (void)load_config();
+    (void)Config_load();
 
     printf("Free mem: %zu\n", _heapmemavail());
 
@@ -70,7 +70,7 @@ int main(void) {
             break;
     }
 
-    status = save_config();
+    status = Config_save();
 
     if (status == true) {
         printf("\nConfig file saved.\n");
@@ -128,7 +128,7 @@ void new_entry(void) {
 
     printf("%s\n", st_title_date);
 
-    increment_date(&prev_date);
+    Date_increment(&prev_date);
 
     year = 0;
 
@@ -325,25 +325,6 @@ unsigned int parse_decimal(char *input) {
     return retval;
 }
 
-/*
- * Parse entry string into tokens delimited by semicolons.
- */
-void parse_entry(char *input, struct Entry *output) {
-    char *token = NULL;
-    unsigned char i;
-
-    for (token = strtok(input, ";"), i = 0; token; token = strtok(NULL, ";"), i++) {
-        if (i == 0) {
-            output->year = atoi(token);
-        } else if (i == 1) {
-            output->month = atoi(token);
-        } else if (i == 2) {
-            output->day = atoi(token);
-        } else if (i == 3) {
-            output->weight = atoi(token);
-        }
-    }
-}
 
 /*
  * Parse tokens from a string delimited by semicolons.
@@ -397,7 +378,7 @@ void read_directory(DIR *dp, char **files) {
 /*
  * Load configuration from disk.
  */
-unsigned char load_config(void) {
+unsigned char Config_load(void) {
     fp = fopen("config.cfg", "r");
     if (fp == NULL) {
         return false;
@@ -419,7 +400,7 @@ unsigned char load_config(void) {
 /*
  * Save configuration to disk.
  */
-unsigned char save_config(void) {
+unsigned char Config_save(void) {
     if (year ==0 || month == 0 || day == 0) {
         return false;
     }
@@ -434,13 +415,55 @@ unsigned char save_config(void) {
     }
 }
 
-void print_entry(struct Entry *entry) {
+/*
+ * Parse entry string into tokens delimited by semicolons.
+ */
+void Entry_parse(char *input, struct Entry *output) {
+    char *token = NULL;
+    unsigned char i;
+
+    for (token = strtok(input, ";"), i = 0; token; token = strtok(NULL, ";"), i++) {
+        if (i == 0) {
+            output->year = atoi(token);
+        } else if (i == 1) {
+            output->month = atoi(token);
+        } else if (i == 2) {
+            output->day = atoi(token);
+        } else if (i == 3) {
+            output->weight = atoi(token);
+        }
+    }
+}
+
+void Entry_print(struct Entry *entry) {
     char *weight_str;
     weight_str = format_weight_str(entry->weight);
 
     printf("%d-%02d-%02d: %s\n",
         entry->year, entry->month, entry->day, weight_str);
     free(weight_str);
+}
+
+
+void Entry_swap(struct Entry *a, struct Entry *b) {
+    struct Entry tmp;
+    tmp = *a;
+    *a = *b;
+    *b = tmp;
+}
+
+void Entry_sort(struct Entry *array, unsigned char len) {
+    unsigned char i;
+    unsigned char changed = 0;
+    for (i=0; i<len-1; i++) {
+        if (array[i].day > array[i+1].day) {
+            Entry_swap(&array[i], &array[i+1]);
+            changed = 1;
+        }
+    }
+    if (changed) {
+        Entry_sort(array, len);
+    }
 }
 
 void open_file(char *filename) {
@@ -454,7 +477,7 @@ void open_file(char *filename) {
         printf("Error opening file: %d\n", errno);
     } else {
         while (fgets(buffer, BUF_LEN, fp) != NULL) {
-            parse_entry(buffer, &entries[i++]);
+            Entry_parse(buffer, &entries[i++]);
         }
     }
     fclose(fp);
@@ -464,35 +487,14 @@ void open_file(char *filename) {
 
     printf("Entries for %s %d:\n", month_names[date->month-1], date->year);
     free(date);
-    sort_entries(entries, entries_length);
+    Entry_sort(entries, entries_length);
 
     for (i=0; i<entries_length; i++) {
-        print_entry(&entries[i]);
+        Entry_print(&entries[i]);
     }
 }
 
-void swap_entries(struct Entry *a, struct Entry *b) {
-    struct Entry tmp;
-    tmp = *a;
-    *a = *b;
-    *b = tmp;
-}
-
-void sort_entries(struct Entry *array, unsigned char len) {
-    unsigned char i;
-    unsigned char changed = 0;
-    for (i=0; i<len-1; i++) {
-        if (array[i].day > array[i+1].day) {
-            swap_entries(&array[i], &array[i+1]);
-            changed = 1;
-        }
-    }
-    if (changed) {
-        sort_entries(array, len);
-    }
-}
-
-void increment_date(struct Date *date) {
+void Date_increment(struct Date *date) {
     if (date->year ==0 || date->month == 0 || date->day == 0) {
         return;
     }
