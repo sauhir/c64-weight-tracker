@@ -23,8 +23,6 @@
 #define FILENAME_LEN 16
 #define NUM_FILES 24
 
-static const unsigned char MAX_DAYS_IN_MONTH = 31;
-
 static const char KEY_NEWLINE = 13;
 static const char KEY_BACKSPACE = 20;
 
