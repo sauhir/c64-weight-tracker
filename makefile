@@ -3,10 +3,10 @@
 ##############################################################################################
 
 all:
-	cl65 --standard c89 -Osir diary.c -o diary.prg
+	cl65 --standard c89 -Osir wtrack64.c -o wtrack64.prg
 
 run:
-	cl65 --standard c89 -Osir diary.c -o diary.prg && open diary.prg
+	cl65 --standard c89 -Osir wtrack64.c -o wtrack64.prg && open wtrack64.prg
 
 clean:
 	$(RM) *.prg *.dat *.cfg
