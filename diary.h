@@ -21,7 +21,7 @@ struct Entry {
     unsigned int year;
     unsigned int month;
     unsigned int day;
-    unsigned int weight;
+    unsigned int weight10x;
 };
 
 struct Config {
@@ -43,19 +43,19 @@ void view_new_entry(void);
 void cleanup(void);
 unsigned int Input_get_integer(void);
 unsigned int Input_get_decimal(void);
-unsigned int Input_parse_decimal(char *);
-int Input_validate_decimal(char *);
-void Tokens_parse(char *, char **);
-void Files_add_file(char *, int, char **);
+unsigned int Input_parse_decimal(unsigned char *);
+unsigned int Input_validate_decimal(unsigned char *);
+void Tokens_parse(unsigned char *, unsigned char **);
+void Files_add_file(unsigned char *, unsigned int, unsigned char **);
 void Files_read_dir(DIR *, struct Files *);
-void Files_list_entries(char *);
+void Files_list_entries(unsigned char *);
 unsigned char Config_load(void);
 unsigned char Config_save(void);
-void Entry_parse(char *, struct Entry *);
+void Entry_parse(unsigned char *, struct Entry *);
 void Entry_print(struct Entry *entry);
 void Entry_swap(struct Entry *, struct Entry *);
 void Entry_sort(struct Entry *, unsigned char);
 void Date_increment(struct Date *);
 char *format_weight_str(unsigned int);
-struct Date *date_from_filename(unsigned char *);
+struct Date *Date_parse_filename(unsigned char *);
 #endif

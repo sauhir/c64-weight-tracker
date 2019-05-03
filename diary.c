@@ -19,20 +19,20 @@ static const char st_prompt_weight[] = "Weight: ";
 unsigned char day;
 unsigned char month;
 unsigned int year;
-char buffer[BUF_LEN];
+unsigned char buffer[BUF_LEN];
 
 FILE *fp;
 DIR *dp;
 struct dirent *ep;
 
-char filename[17];
+unsigned char filename[17];
 unsigned int weight;
 
-char *tmp_ptr;
+unsigned char *tmp_ptr;
 
 struct Files files;
 
-char *tokens[20];
+unsigned char *tokens[20];
 
 struct Date prev_date;
 
@@ -185,7 +185,7 @@ void view_new_entry(void) {
 /*
  * Free allocations.
  */
-void cleanup() {
+void cleanup(void) {
     int i;
     free(fp);
     free(dp);
@@ -270,7 +270,7 @@ unsigned int Input_get_decimal(void) {
 /*
  * Parse a decimal number string into a Decimal struct.
  */
-unsigned int Input_parse_decimal(char *input) {
+unsigned int Input_parse_decimal(unsigned char *input) {
     char letter;
     unsigned int i, j;
     char integer[5];
@@ -308,7 +308,7 @@ unsigned int Input_parse_decimal(char *input) {
  * Validate that the passed string contains only numbers
  * or decimal separators.
  */
-int Input_validate_decimal(char *input) {
+unsigned int Input_validate_decimal(unsigned char *input) {
     char letter;
     int i = 0;
 
@@ -327,7 +327,7 @@ int Input_validate_decimal(char *input) {
 /*
  * Parse tokens from a string delimited by semicolons.
  */
-void Tokens_parse(char *input, char **output) {
+void Tokens_parse(unsigned char *input, unsigned char **output) {
     char *in_token = NULL;
     char *out_token;
     unsigned char i;
@@ -342,7 +342,7 @@ void Tokens_parse(char *input, char **output) {
 /*
  * Allocates and adds filename to array.
  */
-void Files_add_file(char *input, int idx, char **arr_ptr) {
+void Files_add_file(unsigned char *input, unsigned int idx, unsigned char **arr_ptr) {
     char *fn;
     fn = (char*)calloc(strlen(input)+1, sizeof(char));
     strcpy(fn, input);
@@ -373,7 +373,7 @@ void Files_read_dir(DIR *dp, struct Files *files) {
     }
 }
 
-void Files_list_entries(char *filename) {
+void Files_list_entries(unsigned char *filename) {
     unsigned char i;
     struct Date *date;
     printf("\nOpening file: '%s'\n", filename);
@@ -390,7 +390,7 @@ void Files_list_entries(char *filename) {
     fclose(fp);
     entries_length = i;
 
-    date = date_from_filename(filename);
+    date = Date_parse_filename(filename);
 
     printf("Entries for %s %d:\n", month_names[date->month-1], date->year);
     free(date);
@@ -444,7 +444,7 @@ unsigned char Config_save(void) {
 /*
  * Parse entry string into tokens delimited by semicolons.
  */
-void Entry_parse(char *input, struct Entry *output) {
+void Entry_parse(unsigned char *input, struct Entry *output) {
     char *token = NULL;
     unsigned char i;
 
@@ -456,14 +456,14 @@ void Entry_parse(char *input, struct Entry *output) {
         } else if (i == 2) {
             output->day = atoi(token);
         } else if (i == 3) {
-            output->weight = atoi(token);
+            output->weight10x = atoi(token);
         }
     }
 }
 
 void Entry_print(struct Entry *entry) {
     char *weight_str;
-    weight_str = format_weight_str(entry->weight);
+    weight_str = format_weight_str(entry->weight10x);
 
     printf("%d-%02d-%02d: %s\n",
         entry->year, entry->month, entry->day, weight_str);
@@ -509,7 +509,10 @@ void Date_increment(struct Date *date) {
     }
 }
 
-char *format_weight_str(unsigned int weight) {
+/*
+ * Format 10x weight integer into a decimal string.
+ */
+unsigned char *format_weight_str(unsigned int weight) {
     unsigned char integer;
     unsigned char decimal;
     unsigned char *str;
@@ -521,7 +524,10 @@ char *format_weight_str(unsigned int weight) {
     return str;
 }
 
-struct Date *date_from_filename(unsigned char *filename) {
+/*
+ * Parse file name into a Date struct.
+ */
+struct Date *Date_parse_filename(unsigned char *filename) {
     unsigned char *year, *month;
     unsigned char i;
     struct Date *date;
