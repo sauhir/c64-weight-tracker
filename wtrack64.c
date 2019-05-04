@@ -473,6 +473,7 @@ bool Files_load_entries(unsigned char *filename) {
     i = 0;
     fp = fopen(filename, "r");
     if (fp == NULL) {
+        entries.count = 0;
         return false;
     } else {
         while (fgets(buffer, BUF_LEN, fp) != NULL) {
