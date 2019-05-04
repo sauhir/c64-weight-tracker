@@ -155,7 +155,7 @@ void View_directory_list(void) {
     clrscr();
     gotoxy(0,0);
     textcolor(COLOR_GREEN);
-    cprintf("\r\n\r\nAvailable records:\r\n");
+    cprintf("Available records:\r\n");
     textcolor(COLOR_LIGHTGREEN);
 
     if (files.count == 0) {
@@ -167,7 +167,7 @@ void View_directory_list(void) {
     cursor(0);
     input = 0;
     while (1) {
-        gotoxy(0,3);
+        gotoxy(0,2);
         i = 0;
         while (tmp_ptr = files.list[i]) {
             revers(selection == i);
@@ -500,20 +500,27 @@ bool Files_load_entries(unsigned char *filename) {
  * Read entries from file and print them.
  */
 void Files_list_entries(unsigned char *filename) {
-    unsigned char i;
+    unsigned char i, line;
     struct Date *date;
     Files_load_entries(filename);
 
     date = Date_parse_filename(filename);
-
+    clrscr();
+    gotoxy(0, 0);
     textcolor(COLOR_GREEN);
-    cprintf("\r\nEntries for %s %d:\r\n", month_names[date->month-1], date->year);
+    cprintf("Entries for %s %d:\r\n", month_names[date->month-1], date->year);
+    line = 0;
     textcolor(COLOR_LIGHTGREEN);
     free(date);
     Entry_sort(&entries);
 
     for (i=0; i<entries.count; i++) {
         Entry_print(&entries.list[i]);
+        if (++line == LINES_PER_PAGE) {
+            cgetc();
+            clrscr();
+            line = 0;
+        }
     }
 }
 

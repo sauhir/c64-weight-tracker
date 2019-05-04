@@ -22,6 +22,7 @@
 #define BUF_LEN 512
 #define FILENAME_LEN 16
 #define NUM_FILES 24
+#define LINES_PER_PAGE 23
 
 static const char KEY_NEWLINE = 13;
 static const char KEY_BACKSPACE = 20;
