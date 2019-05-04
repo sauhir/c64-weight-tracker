@@ -89,16 +89,11 @@ int main(void) {
         } else if (choice == 2) {
             View_new_entry();
             cgetc();
+            Config_save(&prev_date);
         } else if (choice == 3) {
             cprintf("\r\nShutting down...\r\n");
             break;
         }
-    }
-
-    status = Config_save(&prev_date);
-
-    if (status == true) {
-        cprintf("\r\nConfig file saved.\r\n");
     }
 
     sleep(2);
@@ -158,14 +153,14 @@ void View_directory_list(void) {
     clrscr();
     gotoxy(0,0);
     textcolor(COLOR_GREEN);
-    cprintf("\r\n\r\nAvailable files:\r\n");
+    cprintf("\r\n\r\nAvailable records:\r\n");
     textcolor(COLOR_LIGHTGREEN);
 
     if (files.count == 0) {
         cprintf("No files found.\r\n");
         return;
     }
-    cursor(1);
+    cursor(0);
     input = 0;
     while (1) {
         gotoxy(0,3);
@@ -178,16 +173,13 @@ void View_directory_list(void) {
         }
         revers(0);
 
-        textcolor(COLOR_GREEN);
-        cprintf("\r\nSelect file: ");
-        textcolor(COLOR_LIGHTGREEN);
         input = cgetc();
         if (input == ' ') {
             break;
         } else if (input == 'j') {
-            selection = (selection+1)%3;
+            selection = (selection+1)%files.count;
         } else if (input == 'k') {
-            selection = (selection-1)%3;
+            selection = (selection-1)%files.count;
         }
     }
     Files_list_entries(files.list[selection]);
