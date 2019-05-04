@@ -130,7 +130,7 @@ unsigned char View_main_menu(void) {
         cprintf("Choose: ");
         textcolor(COLOR_LIGHTGREEN);
         input = cgetc();
-        if (input == ' ') {
+        if (input == ' ' || input == 13) {
             return selection+1;
         } else if (input == 'j') {
             selection = (selection+1)%3;
@@ -147,6 +147,8 @@ void View_directory_list(void) {
     unsigned char i, selection;
     unsigned char input;
     struct Date *fileDate;
+
+    memset(files.list, 0, NUM_FILES*sizeof(unsigned char *));
     Files_read_dir(dp, &files);
 
     selection = 0;
@@ -176,12 +178,17 @@ void View_directory_list(void) {
         revers(0);
 
         input = cgetc();
-        if (input == ' ') {
+
+        if (input == ' ' || input == 13) {
             break;
         } else if (input == 'j') {
             selection = (selection+1)%files.count;
         } else if (input == 'k') {
             selection = (selection-1)%files.count;
+        } else if (input == 'd') {
+            Files_delete(files.list[selection]);
+            cprintf("File: %s deleted.\r\n", files.list[selection]);
+            return;
         }
     }
     Files_list_entries(files.list[selection]);
@@ -538,6 +545,13 @@ void Files_sort(struct Files *files) {
     if (changed) {
         Files_sort(files);
     }
+}
+
+/*
+ * Delete file
+ */
+void Files_delete(unsigned char *filename) {
+    remove(filename);
 }
 
 /*

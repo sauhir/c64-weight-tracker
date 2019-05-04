@@ -73,6 +73,7 @@ bool Files_load_entries(unsigned char *);
 void Files_list_entries(unsigned char *);
 void Files_swap(unsigned char *, unsigned char *);
 void Files_sort(struct Files *);
+void Files_delete(unsigned char *);
 
 unsigned char Config_load(void);
 unsigned char Config_save(struct Date *);
