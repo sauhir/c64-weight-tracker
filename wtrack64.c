@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <unistd.h>
 #include <c64.h>
 
 #include "wtrack64.h"
@@ -100,6 +101,7 @@ int main(void) {
         cprintf("\r\nConfig file saved.\r\n");
     }
 
+    sleep(2);
     cleanup();
     clrscr();
     return EXIT_SUCCESS;
@@ -109,28 +111,36 @@ int main(void) {
  * Display main menu choice
  */
 unsigned char View_main_menu(void) {
-    unsigned char input;
+    unsigned char input, selection;
+
+    selection = 0;
+    clrscr();
     textcolor(COLOR_GRAY2);
     cprintf("%s\r\n", st_title_welcome);
+    textcolor(COLOR_GREEN);
+    cprintf("\r\nDo you want to:\r\n");
     textcolor(COLOR_LIGHTGREEN);
+    cursor(0);
 
     while (1) {
+        gotoxy(0, 3);
+        revers(selection == 0);
+        cprintf("-> List existing entries\r\n");
+        revers(selection == 1);
+        cprintf("-> Add a new entry\r\n");
+        revers(selection == 2);
+        cprintf("-> Quit program\r\n");
         textcolor(COLOR_GREEN);
-        cprintf("\r\nDo you want to:\r\n");
-        textcolor(COLOR_LIGHTGREEN);
-        cprintf("1) List existing entries\r\n");
-        cprintf("2) Add a new entry\r\n");
-        cprintf("3) Quit program\r\n");
-        textcolor(COLOR_GREEN);
+        revers(0);
         cprintf("Choose: ");
         textcolor(COLOR_LIGHTGREEN);
         input = cgetc();
-        if (input == '1') {
-            return 1;
-        } else if (input == '2') {
-            return 2;
-        } else if (input == '3') {
-            return 3;
+        if (input == ' ') {
+            return selection+1;
+        } else if (input == 'j') {
+            selection = (selection+1)%3;
+        } else if (input == 'k') {
+            selection = (selection-1)%3;
         }
     }
 }
@@ -139,19 +149,16 @@ unsigned char View_main_menu(void) {
  * Display directory list menu
  */
 void View_directory_list(void) {
-    unsigned char i;
+    unsigned char i, selection;
     unsigned char input;
     Files_read_dir(dp, &files);
 
+    selection = 0;
+    clrscr();
+    gotoxy(0,0);
     textcolor(COLOR_GREEN);
     cprintf("\r\n\r\nAvailable files:\r\n");
     textcolor(COLOR_LIGHTGREEN);
-
-    i = 0;
-    while (tmp_ptr = files.list[i]) {
-        cprintf("%d) %s\r\n", i+1, tmp_ptr);
-        i++;
-    }
 
     if (files.count == 0) {
         cprintf("No files found.\r\n");
@@ -159,13 +166,29 @@ void View_directory_list(void) {
     }
     cursor(1);
     input = 0;
-    while (input < 1 || input > files.count) {
+    while (1) {
+        gotoxy(0,3);
+        i = 0;
+        while (tmp_ptr = files.list[i]) {
+            revers(selection == i);
+            cprintf("-> %s\r\n", tmp_ptr);
+            i++;
+        }
+        revers(0);
+
         textcolor(COLOR_GREEN);
         cprintf("\r\nSelect file: ");
         textcolor(COLOR_LIGHTGREEN);
-        input = (char)Input_get_integer();
+        input = cgetc();
+        if (input == ' ') {
+            break;
+        } else if (input == 'j') {
+            selection = (selection+1)%3;
+        } else if (input == 'k') {
+            selection = (selection-1)%3;
+        }
     }
-    Files_list_entries(files.list[input-1]);
+    Files_list_entries(files.list[selection]);
     cprintf("\r\nPress any key\n\r");
 }
 
