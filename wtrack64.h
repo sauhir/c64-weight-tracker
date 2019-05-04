@@ -1,6 +1,6 @@
 /* Weight Tracker 64
  *
- * Copyright (C) 2019 Tubular Softworks
+ * Copyright (C) 2019 Sauli Hirvi
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __diary_h_
-#define __diary_h_
+#ifndef __wtrack64_h_
+#define __wtrack64_h_
 
 #define BUF_LEN 512
 #define FILENAME_LEN 16

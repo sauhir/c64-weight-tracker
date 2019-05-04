@@ -1,6 +1,6 @@
 /* Weight Tracker 64
  *
- * Copyright (C) 2019 Tubular Softworks
+ * Copyright (C) 2019 Sauli Hirvi
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,10 +23,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <c64.h>
 
 #include "wtrack64.h"
 
-static const char st_title_welcome[] = "Weight Tracker 64 (c) Tubular Softworks 2019";
+static const char st_title_welcome[] = "Weight Tracker 64 (c) Sauli Hirvi 2019";
 static const char st_title_date[] = "What date is it today?";
 static const char st_prompt_day[] = "Day";
 static const char st_prompt_month[] = "Month";
@@ -67,28 +68,40 @@ unsigned char *month_names[] = {
     "Oct", "Nov", "Dec" };
 
 int main(void) {
+    unsigned char choice;
     clrscr();
 
     (void)Config_load();
 
-    printf("Free mem: %zu\n", _heapmemavail());
+    revers(0);
+    bgcolor(COLOR_BLACK);
+    bordercolor(COLOR_GRAY1);
+    textcolor(COLOR_LIGHTGREEN);
 
-    switch (View_main_menu()) {
-        case 1:
+    while(1) {
+        clrscr();
+        choice = View_main_menu();
+
+        if (choice == 1) {
             View_directory_list();
-            break;
-        case 2:
+            cgetc();
+        } else if (choice == 2) {
             View_new_entry();
+            cgetc();
+        } else if (choice == 3) {
+            cprintf("\r\nShutting down...\r\n");
             break;
+        }
     }
 
     status = Config_save(&prev_date);
 
     if (status == true) {
-        printf("\nConfig file saved.\n");
+        cprintf("\r\nConfig file saved.\r\n");
     }
 
     cleanup();
+    clrscr();
     return EXIT_SUCCESS;
 }
 
@@ -97,18 +110,27 @@ int main(void) {
  */
 unsigned char View_main_menu(void) {
     unsigned char input;
-    printf("%s\n", st_title_welcome);
+    textcolor(COLOR_GRAY2);
+    cprintf("%s\r\n", st_title_welcome);
+    textcolor(COLOR_LIGHTGREEN);
 
     while (1) {
-        printf("\nDo you want to:\n");
-        printf("1) List existing entries\n");
-        printf("2) Add a new entry\n");
-        printf("Choose: ");
+        textcolor(COLOR_GREEN);
+        cprintf("\r\nDo you want to:\r\n");
+        textcolor(COLOR_LIGHTGREEN);
+        cprintf("1) List existing entries\r\n");
+        cprintf("2) Add a new entry\r\n");
+        cprintf("3) Quit program\r\n");
+        textcolor(COLOR_GREEN);
+        cprintf("Choose: ");
+        textcolor(COLOR_LIGHTGREEN);
         input = cgetc();
         if (input == '1') {
             return 1;
         } else if (input == '2') {
             return 2;
+        } else if (input == '3') {
+            return 3;
         }
     }
 }
@@ -121,19 +143,30 @@ void View_directory_list(void) {
     unsigned char input;
     Files_read_dir(dp, &files);
 
-    printf("\n\nAvailable files:\n");
+    textcolor(COLOR_GREEN);
+    cprintf("\r\n\r\nAvailable files:\r\n");
+    textcolor(COLOR_LIGHTGREEN);
 
     i = 0;
     while (tmp_ptr = files.list[i]) {
-        printf("%d) %s\n", i+1, tmp_ptr);
+        cprintf("%d) %s\r\n", i+1, tmp_ptr);
         i++;
     }
+
+    if (files.count == 0) {
+        cprintf("No files found.\r\n");
+        return;
+    }
+    cursor(1);
     input = 0;
     while (input < 1 || input > files.count) {
-        printf("\nSelect file: ");
+        textcolor(COLOR_GREEN);
+        cprintf("\r\nSelect file: ");
+        textcolor(COLOR_LIGHTGREEN);
         input = (char)Input_get_integer();
     }
     Files_list_entries(files.list[input-1]);
+    cprintf("\r\nPress any key\n\r");
 }
 
 /*
@@ -145,7 +178,7 @@ void View_new_entry(void) {
     struct Entry *old_entry;
     bool status;
     unsigned char filename[17];
-    printf("%s\n", st_title_date);
+    cprintf("%s\r\n", st_title_date);
 
     old_entry = NULL;
     Date_increment(&prev_date);
@@ -154,7 +187,7 @@ void View_new_entry(void) {
     new_date.year = 0;
 
     while (new_date.year == 0) {
-        printf("\n%s [%d]:", st_prompt_year, prev_date.year);
+        cprintf("\r\n%s [%d]:", st_prompt_year, prev_date.year);
         new_date.year = Input_get_integer();
         if (new_date.year == 0 && prev_date.year > 0) {
             new_date.year = prev_date.year;
@@ -164,7 +197,7 @@ void View_new_entry(void) {
 
     new_date.month = 0;
     while (new_date.month < 1 || new_date.month > 12) {
-        printf("\n%s [%d]:", st_prompt_month, prev_date.month);
+        cprintf("\r\n%s [%d]:", st_prompt_month, prev_date.month);
         new_date.month = (char)Input_get_integer();
         if (new_date.month == 0 && prev_date.month > 0) {
             new_date.month = prev_date.month;
@@ -174,7 +207,7 @@ void View_new_entry(void) {
 
     new_date.day = 0;
     while (new_date.day < 1 || new_date.day > 31) {
-        printf("\n%s [%d]:", st_prompt_day, prev_date.day);
+        cprintf("\r\n%s [%d]:", st_prompt_day, prev_date.day);
         new_date.day = (char)Input_get_integer();
         if (new_date.day == 0 && prev_date.day > 0) {
             new_date.day = prev_date.day;
@@ -182,7 +215,7 @@ void View_new_entry(void) {
         }
     }
 
-    printf("\n%s", st_prompt_weight);
+    cprintf("\r\n%s", st_prompt_weight);
     weight = Input_get_decimal();
 
     entry.weight10x = weight;
@@ -208,6 +241,8 @@ void View_new_entry(void) {
     /* Rewrite the existing entry if exists */
     Entry_save_month(new_date.year, new_date.month);
 
+    cprintf("\r\nEntry saved.\r\n");
+
     prev_date = entry.date;
 }
 
@@ -232,17 +267,22 @@ void cleanup(void) {
  */
 unsigned int Input_get_integer(void) {
     char input;
-    unsigned char i;
+    unsigned char i, x, y;
     unsigned int num;
 
     memset(buffer, 0, BUF_LEN);
     i = 0;
+    cursor(1);
     while (1) {
         input = cgetc();
         if (KEY_BACKSPACE == input) {
             if (i > 0) {
                 --i;
-                printf("%c", input);
+                x = wherex();
+                y = wherey();
+                --x;
+                cputcxy(x, y, ' ');
+                gotoxy(x, y);
             }
             continue;
         }
@@ -253,7 +293,7 @@ unsigned int Input_get_integer(void) {
         }
         /* Ignore everything except numeric input */
         if (input >= '0' && input <= '9') {
-            printf("%c", input);
+            cprintf("%c", input);
             buffer[i] = input;
             ++i;
         }
@@ -266,16 +306,21 @@ unsigned int Input_get_integer(void) {
  */
 unsigned int Input_get_decimal(void) {
     char input;
-    unsigned char i;
+    unsigned char i, x, y;
 
     memset(buffer, 0, BUF_LEN);
     i = 0;
+    cursor(1);
     while (1) {
         input = cgetc();
         if (KEY_BACKSPACE == input) {
             if (i > 0) {
                 --i;
-                printf("%c", input);
+                x = wherex();
+                y = wherey();
+                --x;
+                cputcxy(x, y, ' ');
+                gotoxy(x, y);
             }
             continue;
         }
@@ -285,11 +330,11 @@ unsigned int Input_get_decimal(void) {
         }
         /* Ignore everything except numeric input */
         if (input >= '0' && input <= '9') {
-            printf("%c", input);
+            cprintf("%c", input);
             buffer[i] = input;
             ++i;
         } else if (input == '.' || input == ',') {
-            printf("%c", input);
+            cprintf("%c", input);
             buffer[i] = input;
             ++i;
         }
@@ -398,7 +443,7 @@ void Files_read_dir(DIR *dp, struct Files *files) {
         }
         closedir(dp);
     } else {
-        printf("Error opening directory\n");
+        cprintf("Error opening directory\r\n");
     }
 }
 
@@ -408,12 +453,9 @@ void Files_read_dir(DIR *dp, struct Files *files) {
 bool Files_load_entries(unsigned char *filename) {
     unsigned char i;
 
-    printf("\nOpening file: '%s'\n", filename);
-
     i = 0;
     fp = fopen(filename, "r");
     if (fp == NULL) {
-        printf("Error opening file: %d\n", errno);
         return false;
     } else {
         while (fgets(buffer, BUF_LEN, fp) != NULL) {
@@ -435,7 +477,9 @@ void Files_list_entries(unsigned char *filename) {
 
     date = Date_parse_filename(filename);
 
-    printf("Entries for %s %d:\n", month_names[date->month-1], date->year);
+    textcolor(COLOR_GREEN);
+    cprintf("\r\nEntries for %s %d:\r\n", month_names[date->month-1], date->year);
+    textcolor(COLOR_LIGHTGREEN);
     free(date);
     Entry_sort(&entries);
 
@@ -514,7 +558,7 @@ void Entry_print(struct Entry *entry) {
     char *weight_str;
     weight_str = Entry_format_weight(entry->weight10x);
 
-    printf("%d-%02d-%02d: %s\n",
+    cprintf("%d-%02d-%02d: %s kg\r\n",
         entry->date.year, entry->date.month, entry->date.day, weight_str);
     free(weight_str);
 }
@@ -669,4 +713,3 @@ struct Date *Date_parse_filename(unsigned char *filename) {
     free(month);
     return date;
 }
-
