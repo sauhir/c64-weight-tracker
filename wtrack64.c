@@ -148,7 +148,7 @@ void View_directory_list(void) {
     unsigned char input;
     struct Date *fileDate;
     Files_read_dir(dp, &files);
-    Files_sort(&files);
+
     selection = 0;
     clrscr();
     gotoxy(0,0);
@@ -159,6 +159,8 @@ void View_directory_list(void) {
     if (files.count == 0) {
         cprintf("No files found.\r\n");
         return;
+    } else {
+        Files_sort(&files);
     }
     cursor(0);
     input = 0;
@@ -448,6 +450,8 @@ void Files_read_dir(DIR *dp, struct Files *files) {
 
     dp = opendir (".");
 
+    files->count = 0;
+
     /* Read the directory and add .dat files to array */
     i = 0;
     if (dp != NULL) {
@@ -522,6 +526,9 @@ void Files_swap(unsigned char *a, unsigned char *b) {
 void Files_sort(struct Files *files) {
     unsigned char i;
     unsigned char changed = 0;
+    if (files->count == 0) {
+        return;
+    }
     for (i=0; i<files->count-1; i++) {
         if (strcmp(files->list[i], files->list[i+1]) > 0) {
             Files_swap(files->list[i], files->list[i+1]);
