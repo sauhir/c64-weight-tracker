@@ -3,4 +3,5 @@
 *.prg
 *.dat
 *.txt
+*.d64
 config.cfg
