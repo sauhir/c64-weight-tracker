@@ -151,8 +151,9 @@ unsigned char View_main_menu(void) {
 void View_directory_list(void) {
     unsigned char i, selection;
     unsigned char input;
+    struct Date *fileDate;
     Files_read_dir(dp, &files);
-
+    Files_sort(&files);
     selection = 0;
     clrscr();
     gotoxy(0,0);
@@ -171,7 +172,8 @@ void View_directory_list(void) {
         i = 0;
         while (tmp_ptr = files.list[i]) {
             revers(selection == i);
-            cprintf("-> %s\r\n", tmp_ptr);
+            fileDate = Date_parse_filename(tmp_ptr);
+            cprintf("-> %s %d\r\n", month_names[fileDate->month-1], fileDate->year);
             i++;
         }
         revers(0);
@@ -508,6 +510,33 @@ void Files_list_entries(unsigned char *filename) {
 
     for (i=0; i<entries.count; i++) {
         Entry_print(&entries.list[i]);
+    }
+}
+
+/*
+ * Swap file pointers.
+ */
+void Files_swap(unsigned char *a, unsigned char *b) {
+    unsigned char tmp[17];
+    strcpy(tmp, a);
+    strcpy(a, b);
+    strcpy(b, tmp);
+}
+
+/*
+ * Sort files based on name.
+ */
+void Files_sort(struct Files *files) {
+    unsigned char i;
+    unsigned char changed = 0;
+    for (i=0; i<files->count-1; i++) {
+        if (strcmp(files->list[i], files->list[i+1]) > 0) {
+            Files_swap(files->list[i], files->list[i+1]);
+            changed = 1;
+        }
+    }
+    if (changed) {
+        Files_sort(files);
     }
 }
 

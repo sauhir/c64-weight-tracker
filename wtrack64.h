@@ -59,17 +59,24 @@ unsigned char View_main_menu(void);
 void View_directory_list(void);
 void View_new_entry(void);
 void cleanup(void);
+
 unsigned int Input_get_integer(void);
 unsigned int Input_get_decimal(void);
 unsigned int Input_parse_decimal(unsigned char *);
 unsigned int Input_validate_decimal(unsigned char *);
+
 void Tokens_parse(unsigned char *, unsigned char **);
+
 void Files_add_file(unsigned char *, unsigned int, unsigned char **);
 void Files_read_dir(DIR *, struct Files *);
 bool Files_load_entries(unsigned char *);
 void Files_list_entries(unsigned char *);
+void Files_swap(unsigned char *, unsigned char *);
+void Files_sort(struct Files *);
+
 unsigned char Config_load(void);
 unsigned char Config_save(struct Date *);
+
 void Entry_parse(unsigned char *, struct Entry *);
 void Entry_print(struct Entry *);
 void Entry_save_month(unsigned int, unsigned char);
@@ -78,6 +85,7 @@ struct Entry *Entry_find(struct Date *);
 void Entry_swap(struct Entry *, struct Entry *);
 void Entry_sort(struct Entries *);
 char *Entry_format_weight(unsigned int);
+
 void Date_increment(struct Date *);
 struct Date *Date_parse_filename(unsigned char *);
 #endif
