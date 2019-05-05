@@ -33,26 +33,19 @@ static const char st_title_date[] = "What date is it today?";
 static const char st_prompt_day[] = "Day";
 static const char st_prompt_month[] = "Month";
 static const char st_prompt_year[] = "Year";
-
 static const char st_prompt_weight[] = "Weight: ";
 
 unsigned char buffer[BUF_LEN];
 
-FILE *fp;
-DIR *dp;
-struct dirent *ep;
-
-unsigned char filename[17];
 unsigned int weight;
 
-unsigned char *tmp_ptr;
-
 struct Files files;
+
 struct Entries entries;
 
 unsigned char *tokens[20];
 
-struct Date prev_date;
+struct Config config;
 
 unsigned char status;
 
@@ -84,12 +77,12 @@ int main(void) {
         choice = View_main_menu();
 
         if (choice == 1) {
-            View_directory_list();
+            View_dir_list();
             cgetc();
         } else if (choice == 2) {
             View_new_entry();
             cgetc();
-            Config_save(&prev_date);
+            Config_save(&config);
         } else if (choice == 3) {
             cprintf("\r\nShutting down...\r\n");
             break;
@@ -112,8 +105,9 @@ unsigned char View_main_menu(void) {
     clrscr();
     textcolor(COLOR_GRAY2);
     cprintf("%s\r\n", st_title_welcome);
+    cprintf("Free mem: %zu\r\n", _heapmemavail());
     textcolor(COLOR_GREEN);
-    cprintf("\r\nDo you want to:\r\n");
+    cprintf("Do you want to:\r\n");
     textcolor(COLOR_LIGHTGREEN);
     cursor(0);
 
@@ -143,13 +137,10 @@ unsigned char View_main_menu(void) {
 /*
  * Display directory list menu
  */
-void View_directory_list(void) {
-    unsigned char i, selection;
-    unsigned char input;
-    struct Date *fileDate;
+void View_dir_list(void) {
+    unsigned char selection;
 
-    memset(files.list, 0, NUM_FILES*sizeof(unsigned char *));
-    Files_read_dir(dp, &files);
+    Files_read_dir(&files);
 
     selection = 0;
     clrscr();
@@ -164,15 +155,31 @@ void View_directory_list(void) {
     } else {
         Files_sort(&files);
     }
+
+    selection = View_dir_list_menu(&files);
+
+    Files_list_entries(files.list[selection]);
+    Files_cleanup();
+    cprintf("\r\nPress any key\n\r");
+}
+
+unsigned char View_dir_list_menu(struct Files *files) {
+    unsigned char input;
+    unsigned char i;
+    unsigned char selection;
+    struct Date *file_date;
+    unsigned char *tmp_ptr;
+
     cursor(0);
     input = 0;
     while (1) {
         gotoxy(0,2);
         i = 0;
-        while (tmp_ptr = files.list[i]) {
+        while (tmp_ptr = files->list[i]) {
             revers(selection == i);
-            fileDate = Date_parse_filename(tmp_ptr);
-            cprintf("-> %s %d\r\n", month_names[fileDate->month-1], fileDate->year);
+            file_date = Date_parse_filename(tmp_ptr);
+            cprintf("-> %s %d\r\n", month_names[file_date->month-1], file_date->year);
+            free(file_date);
             i++;
         }
         revers(0);
@@ -180,19 +187,17 @@ void View_directory_list(void) {
         input = cgetc();
 
         if (input == ' ' || input == 13) {
-            break;
+            return selection;
         } else if (input == 'j') {
-            selection = (selection+1)%files.count;
+            selection = (selection+1)%files->count;
         } else if (input == 'k') {
-            selection = (selection-1)%files.count;
+            selection = (selection-1)%files->count;
         } else if (input == 'd') {
-            Files_delete(files.list[selection]);
-            cprintf("File: %s deleted.\r\n", files.list[selection]);
-            return;
+            Files_delete(files->list[selection]);
+            cprintf("File: %s deleted.\r\n", files->list[selection]);
+            return 255;
         }
     }
-    Files_list_entries(files.list[selection]);
-    cprintf("\r\nPress any key\n\r");
 }
 
 /*
@@ -207,36 +212,36 @@ void View_new_entry(void) {
     cprintf("%s\r\n", st_title_date);
 
     old_entry = NULL;
-    Date_increment(&prev_date);
-    new_date = prev_date;
+    Date_increment(&config.last_entry.date);
+    new_date = config.last_entry.date;
 
     new_date.year = 0;
 
     while (new_date.year == 0) {
-        cprintf("\r\n%s [%d]:", st_prompt_year, prev_date.year);
+        cprintf("\r\n%s [%d]:", st_prompt_year, config.last_entry.date.year);
         new_date.year = Input_get_integer();
-        if (new_date.year == 0 && prev_date.year > 0) {
-            new_date.year = prev_date.year;
+        if (new_date.year == 0 && config.last_entry.date.year > 0) {
+            new_date.year = config.last_entry.date.year;
             break;
         }
     }
 
     new_date.month = 0;
     while (new_date.month < 1 || new_date.month > 12) {
-        cprintf("\r\n%s [%d]:", st_prompt_month, prev_date.month);
+        cprintf("\r\n%s [%d]:", st_prompt_month, config.last_entry.date.month);
         new_date.month = (char)Input_get_integer();
-        if (new_date.month == 0 && prev_date.month > 0) {
-            new_date.month = prev_date.month;
+        if (new_date.month == 0 && config.last_entry.date.month > 0) {
+            new_date.month = config.last_entry.date.month;
             break;
         }
     }
 
     new_date.day = 0;
     while (new_date.day < 1 || new_date.day > 31) {
-        cprintf("\r\n%s [%d]:", st_prompt_day, prev_date.day);
+        cprintf("\r\n%s [%d]:", st_prompt_day, config.last_entry.date.day);
         new_date.day = (char)Input_get_integer();
-        if (new_date.day == 0 && prev_date.day > 0) {
-            new_date.day = prev_date.day;
+        if (new_date.day == 0 && config.last_entry.date.day > 0) {
+            new_date.day = config.last_entry.date.day;
             break;
         }
     }
@@ -269,23 +274,14 @@ void View_new_entry(void) {
 
     cprintf("\r\nEntry saved.\r\n");
 
-    prev_date = entry.date;
+    config.last_entry.date = entry.date;
 }
 
 /*
  * Free allocations.
  */
 void cleanup(void) {
-    int i;
-    free(fp);
-    free(dp);
-    free(ep);
-    free(tmp_ptr);
 
-    for (i = 0; i < NUM_FILES ; i++) {
-        free(files.list[i]);
-    }
-    free(files.list);
 }
 
 /*
@@ -452,13 +448,13 @@ void Files_add_file(unsigned char *input, unsigned int idx, unsigned char **arr_
 /*
  * Read directory listing of .dat files into files.
  */
-void Files_read_dir(DIR *dp, struct Files *files) {
+void Files_read_dir(struct Files *files) {
     unsigned int i;
+    struct dirent *ep;
+    DIR *dp;
 
     dp = opendir (".");
-
     files->count = 0;
-
     /* Read the directory and add .dat files to array */
     i = 0;
     if (dp != NULL) {
@@ -473,6 +469,7 @@ void Files_read_dir(DIR *dp, struct Files *files) {
     } else {
         cprintf("Error opening directory\r\n");
     }
+    free(ep);
 }
 
 /*
@@ -480,6 +477,7 @@ void Files_read_dir(DIR *dp, struct Files *files) {
  */
 bool Files_load_entries(unsigned char *filename) {
     unsigned char i;
+    FILE *fp;
 
     i = 0;
     fp = fopen(filename, "r");
@@ -562,34 +560,62 @@ void Files_delete(unsigned char *filename) {
 }
 
 /*
+ * Free file list allocations
+ */
+void Files_cleanup(void) {
+    unsigned char i;
+    for (i=0; i<files.count; i++) {
+        free(files.list[i]);
+    }
+}
+
+/*
  * Load configuration from disk.
  */
 unsigned char Config_load(void) {
+    FILE *fp;
+    unsigned char line=0;
+
     fp = fopen("config.cfg", "r");
     if (fp == NULL) {
         return false;
     } else {
         if (fgets(buffer, BUF_LEN, fp) != NULL) {
-            Tokens_parse(buffer, tokens);
-            fclose(fp);
-            prev_date.year = atoi(tokens[0]);
-            prev_date.month = (unsigned char)atoi(tokens[1]);
-            prev_date.day = (unsigned char)atoi(tokens[2]);
-            return true;
+            if (line == 0) {
+                Tokens_parse(buffer, tokens);
+                config.last_entry.date.year = atoi(tokens[0]);
+                config.last_entry.date.month = (unsigned char)atoi(tokens[1]);
+                config.last_entry.date.day = (unsigned char)atoi(tokens[2]);
+                config.last_entry.weight10x = (unsigned char)atoi(tokens[3]);
+            } else if (line == 1) {
+                Tokens_parse(buffer, tokens);
+                config.max_weight.date.year = atoi(tokens[0]);
+                config.max_weight.date.month = (unsigned char)atoi(tokens[1]);
+                config.max_weight.date.day = (unsigned char)atoi(tokens[2]);
+                config.max_weight.weight10x = (unsigned char)atoi(tokens[3]);
+            } else if (line == 2) {
+                config.min_weight.date.year = atoi(tokens[0]);
+                config.min_weight.date.month = (unsigned char)atoi(tokens[1]);
+                config.min_weight.date.day = (unsigned char)atoi(tokens[2]);
+                config.min_weight.weight10x = (unsigned char)atoi(tokens[3]);
+            }
         } else {
             fclose(fp);
             return false;
         }
     }
+    fclose(fp);
+    return true;
 }
 
 /*
  * Save configuration to disk.
  */
-unsigned char Config_save(struct Date *date) {
-    if (date == NULL) return false;
+unsigned char Config_save(struct Config *config) {
+    unsigned char *csv;
+    FILE *fp;
 
-    if (date->year ==0 || date->month == 0 || date->day == 0) {
+    if (Entry_validate(&config->last_entry) == false) {
         return false;
     }
 
@@ -597,9 +623,10 @@ unsigned char Config_save(struct Date *date) {
     if (fp == NULL) {
         return false;
     } else {
-        sprintf(buffer, "%04d;%02d;%02d", date->year, date->month, date->day);
+        csv = Entry_to_csv(&config->last_entry);
         fputs(buffer, fp);
         fclose(fp);
+        free(csv);
         return true;
     }
 }
@@ -641,6 +668,11 @@ void Entry_print(struct Entry *entry) {
  */
 void Entry_save_month(unsigned int year, unsigned char month) {
     unsigned char i;
+    unsigned char *filename;
+    FILE *fp;
+
+    filename = (unsigned char*)calloc(FILENAME_LEN, sizeof(unsigned char));
+
     /* Construct data file name */
     sprintf(filename, "%04d%02d.dat", year, month);
 
@@ -655,16 +687,31 @@ void Entry_save_month(unsigned int year, unsigned char month) {
         printf("Error opening file\n");
     }
     fclose(fp);
+    free(filename);
+}
+
+/*
+ * Construct CSV string from entry.
+ */
+unsigned char *Entry_to_csv(struct Entry *entry) {
+    unsigned char *csv;
+    csv = (unsigned char*)calloc(32, sizeof(unsigned char));
+    sprintf(csv, "%04d;%02d;%02d;%4d\n", entry->date.year, entry->date.month, entry->date.day, entry->weight10x);
+    return csv;
 }
 
 /*
  * Save entry to disk.
  */
 void Entry_save(struct Entry *entry) {
+    FILE *fp;
+    unsigned char *filename, *csv;
+
     /* Construct data file name */
+    filename = (unsigned char*)calloc(FILENAME_LEN, sizeof(unsigned char));
     sprintf(filename, "%04d%02d.dat", entry->date.year, entry->date.month);
 
-    sprintf(buffer, "%04d;%02d;%02d;%4d\n", entry->date.year, entry->date.month, entry->date.day, entry->weight10x);
+    csv = Entry_to_csv(entry);
 
     fp = fopen(filename, "a");
     if (!fp) {
@@ -672,11 +719,13 @@ void Entry_save(struct Entry *entry) {
     }
 
     if (fp) {
-        fputs(buffer, fp);
+        fputs(csv, fp);
     } else {
         printf("Error opening file\n");
     }
     fclose(fp);
+    free(csv);
+    free(filename);
 }
 
 /*
@@ -737,6 +786,21 @@ unsigned char *Entry_format_weight(unsigned int weight) {
     decimal = weight % integer;
     sprintf(str, "%d.%d", integer, decimal);
     return str;
+}
+
+/*
+ * Checks whether an entry has all fields set.
+ */
+bool Entry_validate(struct Entry *entry) {
+    if (entry == NULL) return false;
+
+    if (entry->date.day ==0 ||
+        entry->date.month == 0 ||
+        entry->date.year == 0 ||
+        entry->weight10x == 0) {
+        return false;
+    }
+    return true;
 }
 
 /*
