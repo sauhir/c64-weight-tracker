@@ -27,6 +27,9 @@
 #include <c64.h>
 
 #include "main.h"
+#include "date.h"
+#include "input.h"
+#include "entry.h"
 
 static const char st_title_welcome[] = "Weight Tracker 64 (c) Sauli Hirvi 2019";
 static const char st_title_date[] = "What date is it today?";
@@ -34,8 +37,6 @@ static const char st_prompt_day[] = "Day";
 static const char st_prompt_month[] = "Month";
 static const char st_prompt_year[] = "Year";
 static const char st_prompt_weight[] = "Weight: ";
-
-unsigned char buffer[BUF_LEN];
 
 struct Files files;
 
@@ -174,7 +175,7 @@ unsigned char View_dir_list_menu(struct Files *files) {
             file_date = Date_parse_filename(file_ptr);
             cprintf("-> %s %d\r\n", month_names[file_date->month-1], file_date->year);
             free(file_date);
-            i++;
+            ++i;
         }
         revers(0);
 
@@ -255,18 +256,19 @@ void View_new_entry(void) {
 
     /* Check if the current entry already exists */
     if (status == true) {
-        old_entry = Entry_find(&new_date);
+        old_entry = Entry_find(&entries, &new_date);
     }
 
     if (old_entry != NULL) {
         old_entry->weight10x = entry.weight10x;
     } else {
-        entries.list[(entries.count)++] = entry;
+        entries.list[entries.count] = entry;
+        entries.count += 1;
     }
 
     Entry_sort(&entries);
     /* Rewrite the existing entry if exists */
-    Entry_save_month(new_date.year, new_date.month);
+    Entry_save_month(&entries, new_date.year, new_date.month);
 
     cprintf("\r\nEntry saved.\r\n");
 
@@ -280,360 +282,3 @@ void cleanup(void) {
 
 }
 
-/*
- * Read an integer from STDIN.
- */
-unsigned int Input_get_integer(void) {
-    char input;
-    unsigned char i, x, y;
-    unsigned int num;
-
-    memset(buffer, 0, BUF_LEN);
-    i = 0;
-    cursor(1);
-    while (1) {
-        input = cgetc();
-        if (KEY_BACKSPACE == input) {
-            if (i > 0) {
-                --i;
-                x = wherex();
-                y = wherey();
-                --x;
-                cputcxy(x, y, ' ');
-                gotoxy(x, y);
-            }
-            continue;
-        }
-
-        if (KEY_NEWLINE == input) {
-            num = atoi(buffer);
-            return num;
-        }
-        /* Ignore everything except numeric input */
-        if (input >= '0' && input <= '9') {
-            cprintf("%c", input);
-            buffer[i] = input;
-            ++i;
-        }
-    }
-    return 0;
-}
-
-/*
- * Read a decimal number from STDIN.
- */
-unsigned int Input_get_decimal(void) {
-    char input;
-    unsigned char i, x, y;
-
-    memset(buffer, 0, BUF_LEN);
-    i = 0;
-    cursor(1);
-    while (1) {
-        input = cgetc();
-        if (KEY_BACKSPACE == input) {
-            if (i > 0) {
-                --i;
-                x = wherex();
-                y = wherey();
-                --x;
-                cputcxy(x, y, ' ');
-                gotoxy(x, y);
-            }
-            continue;
-        }
-
-        if (KEY_NEWLINE == input) {
-            return Input_parse_decimal(buffer);
-        }
-        /* Ignore everything except numeric input */
-        if (input >= '0' && input <= '9') {
-            cprintf("%c", input);
-            buffer[i] = input;
-            ++i;
-        } else if (input == '.' || input == ',') {
-            cprintf("%c", input);
-            buffer[i] = input;
-            ++i;
-        }
-    }
-}
-
-/*
- * Parse a decimal number string into a Decimal struct.
- */
-unsigned int Input_parse_decimal(unsigned char *input) {
-    char letter;
-    unsigned int i, j;
-    char integer[5];
-    char decimal[5];
-    unsigned int retval = 0;
-
-    memset(integer, 0, sizeof integer);
-    memset(decimal, 0, sizeof decimal);
-
-    i = 0;
-    j = 0;
-    /* Parse integer part */
-    while (letter = input[i++]) {
-        if (letter >= '0' && letter <= '9') {
-            integer[j++] = letter;
-        } else if (letter == ',' || letter == '.') {
-            break;
-        }
-    }
-
-    j = 0;
-    /* Parse decimal part */
-    while (letter = input[i++]) {
-        if (letter >= '0' && letter <= '9') {
-            decimal[j++] = letter;
-        }
-    }
-
-    retval = atoi(integer) * 10;
-    retval += atoi(decimal);
-    return retval;
-}
-
-/*
- * Validate that the passed string contains only numbers
- * or decimal separators.
- */
-unsigned int Input_validate_decimal(unsigned char *input) {
-    char letter;
-    int i = 0;
-
-    while (letter = input[i++]) {
-        if (letter >= '0' && letter <= '9') {
-            continue;
-        } else if (letter == ',' || letter == '.') {
-            continue;
-        } else {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-
-
-/*
- * Parse entry string into tokens delimited by semicolons.
- */
-void Entry_parse(unsigned char *input, struct Entry *output) {
-    char *token = NULL;
-    unsigned char i;
-
-    for (token = strtok(input, ";"), i = 0; token; token = strtok(NULL, ";"), i++) {
-        if (i == 0) {
-            output->date.year = atoi(token);
-        } else if (i == 1) {
-            output->date.month = atoi(token);
-        } else if (i == 2) {
-            output->date.day = atoi(token);
-        } else if (i == 3) {
-            output->weight10x = atoi(token);
-        }
-    }
-}
-
-/*
- * Print formatted entry.
- */
-void Entry_print(struct Entry *entry) {
-    char *weight_str;
-    weight_str = Entry_format_weight(entry->weight10x);
-
-    cprintf("%d-%02d-%02d: %s kg\r\n",
-        entry->date.year, entry->date.month, entry->date.day, weight_str);
-    free(weight_str);
-}
-
-/*
- * Save entries for one month to disk.
- */
-void Entry_save_month(unsigned int year, unsigned char month) {
-    unsigned char i;
-    unsigned char *filename;
-    FILE *fp;
-
-    filename = (unsigned char*)calloc(FILENAME_LEN, sizeof(unsigned char));
-
-    /* Construct data file name */
-    sprintf(filename, "%04d%02d.dat", year, month);
-
-    fp = fopen(filename, "w");
-
-    if (fp) {
-        for (i=0; i<entries.count; i++) {
-            sprintf(buffer, "%04d;%02d;%02d;%4d\n", entries.list[i].date.year, entries.list[i].date.month, entries.list[i].date.day, entries.list[i].weight10x);
-            fputs(buffer, fp);
-        }
-    } else {
-        printf("Error opening file\n");
-    }
-    fclose(fp); fp = NULL;
-    free(filename);
-}
-
-/*
- * Construct CSV string from entry.
- */
-unsigned char *Entry_to_csv(struct Entry *entry) {
-    unsigned char *csv;
-    csv = (unsigned char*)calloc(32, sizeof(unsigned char));
-    sprintf(csv, "%04d;%02d;%02d;%4d\n", entry->date.year, entry->date.month, entry->date.day, entry->weight10x);
-    return csv;
-}
-
-/*
- * Save entry to disk.
- */
-void Entry_save(struct Entry *entry) {
-    FILE *fp;
-    unsigned char *filename, *csv;
-
-    /* Construct data file name */
-    filename = (unsigned char*)calloc(FILENAME_LEN, sizeof(unsigned char));
-    sprintf(filename, "%04d%02d.dat", entry->date.year, entry->date.month);
-
-    csv = Entry_to_csv(entry);
-
-    fp = fopen(filename, "a");
-    if (!fp) {
-        fp = fopen(filename, "w");
-    }
-
-    if (fp) {
-        fputs(csv, fp);
-    } else {
-        printf("Error opening file\n");
-    }
-    fclose(fp); fp = NULL;
-    free(csv);
-    free(filename);
-}
-
-/*
- * Find an entry based on date.
- */
-struct Entry *Entry_find(struct Date *date) {
-    unsigned char i;
-    bool is_equal = true;
-
-    for (i=0; i<entries.count; i++) {
-        if (entries.list[i].date.day != date->day) is_equal = false;
-        if (entries.list[i].date.month != date->month) is_equal = false;
-        if (entries.list[i].date.year != date->year) is_equal = false;
-        if (is_equal == true) {
-            return &entries.list[i];
-        }
-    }
-    return NULL;
-}
-
-/*
- * Swap entry pointers.
- */
-void Entry_swap(struct Entry *a, struct Entry *b) {
-    struct Entry tmp;
-    tmp = *a;
-    *a = *b;
-    *b = tmp;
-}
-
-/*
- * Sort entries based on day.
- */
-void Entry_sort(struct Entries *entries) {
-    unsigned char i;
-    unsigned char changed = 0;
-    for (i=0; i<entries->count-1; i++) {
-        if (entries->list[i].date.day > entries->list[i+1].date.day) {
-            Entry_swap(&entries->list[i], &entries->list[i+1]);
-            changed = 1;
-        }
-    }
-    if (changed) {
-        Entry_sort(entries);
-    }
-}
-
-/*
- * Format 10x weight integer into a decimal string.
- */
-unsigned char *Entry_format_weight(unsigned int weight) {
-    unsigned char integer;
-    unsigned char decimal;
-    unsigned char *str;
-
-    str = (unsigned char *)calloc(5, sizeof(char));
-    integer = weight / 10;
-    decimal = weight % integer;
-    sprintf(str, "%d.%d", integer, decimal);
-    return str;
-}
-
-/*
- * Checks whether an entry has all fields set.
- */
-bool Entry_validate(struct Entry *entry) {
-    if (entry == NULL) return false;
-
-    if (entry->date.day ==0 ||
-        entry->date.month == 0 ||
-        entry->date.year == 0 ||
-        entry->weight10x == 0) {
-        return false;
-    }
-    return true;
-}
-
-/*
- * Increment the date based on number of days per month.
- */
-void Date_increment(struct Date *date) {
-    if (date->year ==0 || date->month == 0 || date->day == 0) {
-        return;
-    }
-
-    date->day++;
-
-    if (date->day > days_in_month[date->month-1]) {
-        date->day = 1;
-        date->month++;
-    }
-    if (date->month > 12) {
-        date->month = 1;
-        date->year++;
-    }
-}
-
-/*
- * Parse file name into a Date struct.
- */
-struct Date *Date_parse_filename(unsigned char *filename) {
-    unsigned char *year, *month;
-    unsigned char i;
-    struct Date *date;
-
-    year = (unsigned char *)calloc(4+1, sizeof(char*));
-    month = (unsigned char *)calloc(2+1, sizeof(char*));
-    date = (struct Date *)calloc(1, sizeof(struct Date *));
-
-    for (i=0; i<4; i++) {
-        year[i] = filename[i];
-    }
-    for (i=0; i<2; i++) {
-        month[i] = filename[i+4];
-    }
-
-    date->year = atoi(year);
-    date->month = atoi(month);
-    date->day = 0;
-
-    free(year);
-    free(month);
-    return date;
-}

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "global.h"
+#include "defs.h"
 
 #ifndef __tokens_h_
 #define __tokens_h_

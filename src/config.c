@@ -22,6 +22,7 @@
 #include "config.h"
 #include "tokens.h"
 #include "main.h"
+#include "entry.h"
 
 /*
  * Load configuration from disk.

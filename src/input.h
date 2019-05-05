@@ -16,30 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include "tokens.h"
+#ifndef __input_h_
+#define __input_h_
 
-/*
- * Parse tokens from a string delimited by semicolons.
- */
-void Tokens_parse(unsigned char *input, struct Tokens *tokens) {
-    unsigned char *in_token = NULL;
-    unsigned char *out_token;
-    unsigned char i;
+unsigned int Input_get_integer(void);
+unsigned int Input_get_decimal(void);
+unsigned int Input_parse_decimal(unsigned char *);
+unsigned int Input_validate_decimal(unsigned char *);
 
-    for (in_token = strtok(input, ";"), i = 0; in_token; in_token = strtok(NULL, ";"), ++i) {
-        out_token = (char*)calloc(strlen(in_token)+1, sizeof(char));
-        strcpy(out_token, in_token);
-        tokens->list[i] = out_token;
-        tokens->count = i;
-    }
-}
-
-void Tokens_cleanup(struct Tokens *tokens) {
-    unsigned char i;
-    for (i=0; i<tokens->count; ++i) {
-        free(tokens->list[i]);
-    }
-}
+#endif

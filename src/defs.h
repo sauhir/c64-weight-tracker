@@ -16,8 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __global_h_
-#define __global_h_
+#ifndef __defs_h_
+#define __defs_h_
 
 struct Date {
     unsigned char day;

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "global.h"
+#include "defs.h"
 #include <stdbool.h>
 
 #ifndef __files_h_

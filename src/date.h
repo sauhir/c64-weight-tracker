@@ -16,30 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include "tokens.h"
+#include "defs.h"
 
-/*
- * Parse tokens from a string delimited by semicolons.
- */
-void Tokens_parse(unsigned char *input, struct Tokens *tokens) {
-    unsigned char *in_token = NULL;
-    unsigned char *out_token;
-    unsigned char i;
+#ifndef __date_h_
+#define __date_h_
 
-    for (in_token = strtok(input, ";"), i = 0; in_token; in_token = strtok(NULL, ";"), ++i) {
-        out_token = (char*)calloc(strlen(in_token)+1, sizeof(char));
-        strcpy(out_token, in_token);
-        tokens->list[i] = out_token;
-        tokens->count = i;
-    }
-}
+void Date_increment(struct Date *);
+struct Date *Date_parse_filename(unsigned char *);
 
-void Tokens_cleanup(struct Tokens *tokens) {
-    unsigned char i;
-    for (i=0; i<tokens->count; ++i) {
-        free(tokens->list[i]);
-    }
-}
+#endif

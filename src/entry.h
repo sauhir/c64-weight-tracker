@@ -16,30 +16,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <conio.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "tokens.h"
+#include "defs.h"
 
-/*
- * Parse tokens from a string delimited by semicolons.
- */
-void Tokens_parse(unsigned char *input, struct Tokens *tokens) {
-    unsigned char *in_token = NULL;
-    unsigned char *out_token;
-    unsigned char i;
+#ifndef __entry_h_
+#define __entry_h_
 
-    for (in_token = strtok(input, ";"), i = 0; in_token; in_token = strtok(NULL, ";"), ++i) {
-        out_token = (char*)calloc(strlen(in_token)+1, sizeof(char));
-        strcpy(out_token, in_token);
-        tokens->list[i] = out_token;
-        tokens->count = i;
-    }
-}
+#include <stdbool.h>
 
-void Tokens_cleanup(struct Tokens *tokens) {
-    unsigned char i;
-    for (i=0; i<tokens->count; ++i) {
-        free(tokens->list[i]);
-    }
-}
+void Entry_parse(unsigned char *, struct Entry *);
+void Entry_print(struct Entry *);
+void Entry_save_month(struct Entries *, unsigned int, unsigned char);
+void Entry_save(struct Entry *);
+struct Entry *Entry_find(struct Entries *, struct Date *);
+void Entry_swap(struct Entry *, struct Entry *);
+void Entry_sort(struct Entries *);
+char *Entry_format_weight(unsigned int);
+bool Entry_validate(struct Entry *);
+unsigned char *Entry_to_csv(struct Entry *);
+
+#endif

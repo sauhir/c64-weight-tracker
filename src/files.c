@@ -6,6 +6,8 @@
 #include <dirent.h>
 #include "files.h"
 #include "main.h"
+#include "date.h"
+#include "entry.h"
 
 /*
  * Allocates and adds filename to array.
@@ -33,7 +35,7 @@ void Files_read_dir(struct Files *files) {
         while (ep = readdir(dp)) {
             if (strstr(ep->d_name, ".dat")) {
                 Files_add_file(ep->d_name, i, files->list);
-                i++;
+                ++i;
                 files->count = i;
             }
         }
@@ -59,7 +61,8 @@ bool Files_load_entries(unsigned char *filename, struct Entries *entries) {
         return false;
     } else {
         while (fgets(buffer, BUF_LEN, fp) != NULL) {
-            Entry_parse(buffer, &entries->list[i++]);
+            Entry_parse(buffer, &entries->list[i]);
+            ++i;
         }
     }
     fclose(fp); fp = NULL;
@@ -85,7 +88,7 @@ void Files_list_entries(unsigned char *filename, struct Entries *entries) {
     free(date);
     Entry_sort(entries);
 
-    for (i=0; i<entries->count; i++) {
+    for (i=0; i<entries->count; ++i) {
         Entry_print(&entries->list[i]);
         if (++line == LINES_PER_PAGE) {
             cgetc();
@@ -114,7 +117,7 @@ void Files_sort(struct Files *files) {
     if (files->count == 0) {
         return;
     }
-    for (i=0; i<files->count-1; i++) {
+    for (i=0; i<files->count-1; ++i) {
         if (strcmp(files->list[i], files->list[i+1]) > 0) {
             Files_swap(files->list[i], files->list[i+1]);
             changed = 1;
@@ -137,7 +140,7 @@ void Files_delete(unsigned char *filename) {
  */
 void Files_cleanup(struct Files *files) {
     unsigned char i;
-    for (i=0; i<files->count; i++) {
+    for (i=0; i<files->count; ++i) {
         free(files->list[i]);
     }
 }
