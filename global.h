@@ -59,4 +59,7 @@ struct Tokens {
     unsigned char count;
 };
 
+extern unsigned char days_in_month[];
+extern unsigned char *month_names[];
+
 #endif

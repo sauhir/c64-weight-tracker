@@ -19,6 +19,7 @@
 #include "global.h"
 #include "config.h"
 #include "tokens.h"
+#include "files.h"
 
 #ifndef __wtrack64_h_
 #define __wtrack64_h_
@@ -35,15 +36,6 @@ unsigned int Input_get_integer(void);
 unsigned int Input_get_decimal(void);
 unsigned int Input_parse_decimal(unsigned char *);
 unsigned int Input_validate_decimal(unsigned char *);
-
-void Files_add_file(unsigned char *, unsigned int, unsigned char **);
-void Files_read_dir(struct Files *);
-bool Files_load_entries(unsigned char *);
-void Files_list_entries(unsigned char *);
-void Files_swap(unsigned char *, unsigned char *);
-void Files_sort(struct Files *);
-void Files_delete(unsigned char *);
-void Files_cleanup(void);
 
 void Entry_parse(unsigned char *, struct Entry *);
 void Entry_print(struct Entry *);
