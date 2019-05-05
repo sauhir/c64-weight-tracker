@@ -16,48 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "global.h"
+#include "config.h"
+#include "tokens.h"
+
 #ifndef __wtrack64_h_
 #define __wtrack64_h_
 
-#define BUF_LEN 80
-#define FILENAME_LEN 17
-#define NUM_FILES 24
-#define LINES_PER_PAGE 22
-
-static const char KEY_NEWLINE = 13;
-static const char KEY_BACKSPACE = 20;
-
-struct Date {
-    unsigned char day;
-    unsigned char month;
-    unsigned int year;
-};
-
-struct Entry {
-    struct Date date;
-    unsigned int weight10x;
-};
-
-struct Entries {
-    struct Entry list[31];
-    unsigned char count;
-};
-
-struct Config {
-    struct Entry last_entry;
-    struct Entry max_weight;
-    struct Entry min_weight;
-};
-
-struct Files {
-    unsigned char *list[NUM_FILES];
-    unsigned char count;
-};
-
-struct Tokens {
-    unsigned char *list[NUM_FILES];
-    unsigned char count;
-};
 
 /* Function prototypes */
 unsigned char View_main_menu(void);
@@ -71,9 +36,6 @@ unsigned int Input_get_decimal(void);
 unsigned int Input_parse_decimal(unsigned char *);
 unsigned int Input_validate_decimal(unsigned char *);
 
-void Tokens_parse(unsigned char *input, struct Tokens *);
-void Tokens_cleanup(struct Tokens *);
-
 void Files_add_file(unsigned char *, unsigned int, unsigned char **);
 void Files_read_dir(struct Files *);
 bool Files_load_entries(unsigned char *);
@@ -82,9 +44,6 @@ void Files_swap(unsigned char *, unsigned char *);
 void Files_sort(struct Files *);
 void Files_delete(unsigned char *);
 void Files_cleanup(void);
-
-unsigned char Config_load(void);
-unsigned char Config_save(struct Config *);
 
 void Entry_parse(unsigned char *, struct Entry *);
 void Entry_print(struct Entry *);

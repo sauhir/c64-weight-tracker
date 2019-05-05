@@ -59,7 +59,7 @@ int main(void) {
     unsigned char choice;
     clrscr();
 
-    (void)Config_load();
+    (void)Config_load(&config);
 
     revers(0);
     bgcolor(COLOR_BLACK);
@@ -118,7 +118,7 @@ unsigned char View_main_menu(void) {
         cprintf("Choose: ");
         textcolor(COLOR_LIGHTGREEN);
         input = cgetc();
-        if (input == ' ' || input == 13) {
+        if (input == ' ' || input == KEY_NEWLINE) {
             return selection+1;
         } else if (input == 'j') {
             selection = (selection+1)%3;
@@ -417,30 +417,6 @@ unsigned int Input_validate_decimal(unsigned char *input) {
 }
 
 /*
- * Parse tokens from a string delimited by semicolons.
- */
-void Tokens_parse(unsigned char *input, struct Tokens *tokens) {
-    unsigned char *in_token = NULL;
-    unsigned char *out_token;
-    unsigned char i;
-
-    for (in_token = strtok(input, ";"), i = 0; in_token; in_token = strtok(NULL, ";"), i++) {
-        out_token = (char*)calloc(strlen(in_token)+1, sizeof(char));
-        strcpy(out_token, in_token);
-        tokens->list[i] = out_token;
-        tokens->count = i;
-    }
-}
-
-void Tokens_cleanup(struct Tokens *tokens) {
-    unsigned char i;
-    for (i=0; i<tokens->count; i++) {
-        free(tokens->list[i]);
-    }
-}
-
-
-/*
  * Allocates and adds filename to array.
  */
 void Files_add_file(unsigned char *input, unsigned int idx, unsigned char **arr_ptr) {
@@ -574,72 +550,6 @@ void Files_cleanup(void) {
     }
 }
 
-/*
- * Load configuration from disk.
- */
-unsigned char Config_load(void) {
-    FILE *fp;
-    unsigned char line=0;
-    struct Tokens tokens;
-
-    fp = fopen("config.cfg", "r");
-    if (fp == NULL) {
-        return false;
-    } else {
-        if (fgets(buffer, BUF_LEN, fp) != NULL) {
-            if (line == 0) {
-                Tokens_parse(buffer, &tokens);
-                config.last_entry.date.year = atoi(tokens.list[0]);
-                config.last_entry.date.month = (unsigned char)atoi(tokens.list[1]);
-                config.last_entry.date.day = (unsigned char)atoi(tokens.list[2]);
-                config.last_entry.weight10x = (unsigned char)atoi(tokens.list[3]);
-                Tokens_cleanup(&tokens);
-            } else if (line == 1) {
-                Tokens_parse(buffer, &tokens);
-                config.max_weight.date.year = atoi(tokens.list[0]);
-                config.max_weight.date.month = (unsigned char)atoi(tokens.list[1]);
-                config.max_weight.date.day = (unsigned char)atoi(tokens.list[2]);
-                config.max_weight.weight10x = (unsigned char)atoi(tokens.list[3]);
-                Tokens_cleanup(&tokens);
-            } else if (line == 2) {
-                Tokens_parse(buffer, &tokens);
-                config.min_weight.date.year = atoi(tokens.list[0]);
-                config.min_weight.date.month = (unsigned char)atoi(tokens.list[1]);
-                config.min_weight.date.day = (unsigned char)atoi(tokens.list[2]);
-                config.min_weight.weight10x = (unsigned char)atoi(tokens.list[3]);
-                Tokens_cleanup(&tokens);
-            }
-        } else {
-            fclose(fp); fp = NULL;
-            return false;
-        }
-    }
-    fclose(fp); fp = NULL;
-    return true;
-}
-
-/*
- * Save configuration to disk.
- */
-unsigned char Config_save(struct Config *config) {
-    unsigned char *csv;
-    FILE *fp;
-
-    if (Entry_validate(&config->last_entry) == false) {
-        return false;
-    }
-
-    fp = fopen("config.cfg", "w");
-    if (fp == NULL) {
-        return false;
-    } else {
-        csv = Entry_to_csv(&config->last_entry);
-        fputs(buffer, fp);
-        fclose(fp); fp = NULL;
-        free(csv);
-        return true;
-    }
-}
 
 /*
  * Parse entry string into tokens delimited by semicolons.
