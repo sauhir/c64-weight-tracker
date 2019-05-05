@@ -26,7 +26,7 @@
 #include <unistd.h>
 #include <c64.h>
 
-#include "wtrack64.h"
+#include "main.h"
 
 static const char st_title_welcome[] = "Weight Tracker 64 (c) Sauli Hirvi 2019";
 static const char st_title_date[] = "What date is it today?";

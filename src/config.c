@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include "config.h"
 #include "tokens.h"
-#include "wtrack64.h"
+#include "main.h"
 
 /*
  * Load configuration from disk.

@@ -1,17 +1,33 @@
 ##############################################################################################
-# C64 lotto randomizer
+# Weight Tracker 64
 ##############################################################################################
 
-all:
-	cl65 --standard c89 -Osir files.c tokens.c config.c wtrack64.c -o wtrack64.prg
+MKDIR_P = mkdir -p
+BIN_DIR = bin
+SRC_DIR = src
 
-run:
-	cl65 --standard c89 -Osir files.c tokens.c config.c wtrack64.c -o wtrack64.prg && open wtrack64.prg
+.PHONY: directories
 
-d64:
-	cl65 --standard c89 -Osir files.c tokens.c config.c wtrack64.c -o wtrack64.prg
+all: directories wtrack64
+
+directories: $(BIN_DIR) $(SRC_DIR)
+
+$(BIN_DIR):
+	$(MKDIR_P) $(BIN_DIR)
+
+$(SRC_DIR):
+	$(MKDIR_P) $(SRC_DIR)
+
+wtrack64:
+	cl65 --standard c89 -Osir $(SRC_DIR)/files.c $(SRC_DIR)/tokens.c $(SRC_DIR)/config.c $(SRC_DIR)/main.c -o $(BIN_DIR)/wtrack64.prg
+
+run: directories
+	cl65 --standard c89 -Osir $(SRC_DIR)/files.c $(SRC_DIR)/tokens.c $(SRC_DIR)/config.c $(SRC_DIR)/main.c -o $(BIN_DIR)/wtrack64.prg && open $(BIN_DIR)/wtrack64.prg
+
+d64: directories
+	cl65 --standard c89 -Osir $(SRC_DIR)/files.c $(SRC_DIR)/tokens.c $(SRC_DIR)/config.c $(SRC_DIR)/main.c -o $(BIN_DIR)/wtrack64.prg
 	# c1541 -format wtrack,id d64 wtrack.d64 -attach wtrack.d64 -write wtrack64.prg wtrack64
-	c1541 -attach wtrack.d64 -delete wtrack64 -write wtrack64.prg wtrack64
+	c1541 -attach $(BIN_DIR)/wtrack.d64 -delete wtrack64 -write $(BIN_DIR)/wtrack64.prg wtrack64
 
 clean:
-	$(RM) *.prg *.dat *.cfg
+	$(RM) $(SRC_DIR)/*.o $(BIN_DIR)/*.prg $(BIN_DIR)/*.dat $(BIN_DIR)/*.cfg

@@ -5,7 +5,7 @@
 #include <string.h>
 #include <dirent.h>
 #include "files.h"
-#include "wtrack64.h"
+#include "main.h"
 
 /*
  * Allocates and adds filename to array.

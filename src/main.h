@@ -21,8 +21,8 @@
 #include "tokens.h"
 #include "files.h"
 
-#ifndef __wtrack64_h_
-#define __wtrack64_h_
+#ifndef __main_h_
+#define __main_h_
 
 
 /* Function prototypes */
