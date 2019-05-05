@@ -37,17 +37,11 @@ static const char st_prompt_weight[] = "Weight: ";
 
 unsigned char buffer[BUF_LEN];
 
-unsigned int weight;
-
 struct Files files;
 
 struct Entries entries;
 
-unsigned char *tokens[20];
-
 struct Config config;
-
-unsigned char status;
 
 unsigned char days_in_month[] = {
     31, 28, 31,
@@ -168,16 +162,16 @@ unsigned char View_dir_list_menu(struct Files *files) {
     unsigned char i;
     unsigned char selection;
     struct Date *file_date;
-    unsigned char *tmp_ptr;
+    unsigned char *file_ptr;
 
     cursor(0);
     input = 0;
     while (1) {
         gotoxy(0,2);
         i = 0;
-        while (tmp_ptr = files->list[i]) {
+        while (file_ptr = files->list[i]) {
             revers(selection == i);
-            file_date = Date_parse_filename(tmp_ptr);
+            file_date = Date_parse_filename(file_ptr);
             cprintf("-> %s %d\r\n", month_names[file_date->month-1], file_date->year);
             free(file_date);
             i++;
@@ -209,6 +203,8 @@ void View_new_entry(void) {
     struct Entry *old_entry;
     bool status;
     unsigned char filename[17];
+    unsigned int weight;
+
     cprintf("%s\r\n", st_title_date);
 
     old_entry = NULL;
@@ -423,17 +419,26 @@ unsigned int Input_validate_decimal(unsigned char *input) {
 /*
  * Parse tokens from a string delimited by semicolons.
  */
-void Tokens_parse(unsigned char *input, unsigned char **output) {
-    char *in_token = NULL;
-    char *out_token;
+void Tokens_parse(unsigned char *input, struct Tokens *tokens) {
+    unsigned char *in_token = NULL;
+    unsigned char *out_token;
     unsigned char i;
 
     for (in_token = strtok(input, ";"), i = 0; in_token; in_token = strtok(NULL, ";"), i++) {
         out_token = (char*)calloc(strlen(in_token)+1, sizeof(char));
         strcpy(out_token, in_token);
-        output[i] = out_token;
+        tokens->list[i] = out_token;
+        tokens->count = i;
     }
 }
+
+void Tokens_cleanup(struct Tokens *tokens) {
+    unsigned char i;
+    for (i=0; i<tokens->count; i++) {
+        free(tokens->list[i]);
+    }
+}
+
 
 /*
  * Allocates and adds filename to array.
@@ -489,7 +494,7 @@ bool Files_load_entries(unsigned char *filename) {
             Entry_parse(buffer, &entries.list[i++]);
         }
     }
-    fclose(fp);
+    fclose(fp); fp = NULL;
     entries.count = i;
     return true;
 }
@@ -575,6 +580,7 @@ void Files_cleanup(void) {
 unsigned char Config_load(void) {
     FILE *fp;
     unsigned char line=0;
+    struct Tokens tokens;
 
     fp = fopen("config.cfg", "r");
     if (fp == NULL) {
@@ -582,29 +588,33 @@ unsigned char Config_load(void) {
     } else {
         if (fgets(buffer, BUF_LEN, fp) != NULL) {
             if (line == 0) {
-                Tokens_parse(buffer, tokens);
-                config.last_entry.date.year = atoi(tokens[0]);
-                config.last_entry.date.month = (unsigned char)atoi(tokens[1]);
-                config.last_entry.date.day = (unsigned char)atoi(tokens[2]);
-                config.last_entry.weight10x = (unsigned char)atoi(tokens[3]);
+                Tokens_parse(buffer, &tokens);
+                config.last_entry.date.year = atoi(tokens.list[0]);
+                config.last_entry.date.month = (unsigned char)atoi(tokens.list[1]);
+                config.last_entry.date.day = (unsigned char)atoi(tokens.list[2]);
+                config.last_entry.weight10x = (unsigned char)atoi(tokens.list[3]);
+                Tokens_cleanup(&tokens);
             } else if (line == 1) {
-                Tokens_parse(buffer, tokens);
-                config.max_weight.date.year = atoi(tokens[0]);
-                config.max_weight.date.month = (unsigned char)atoi(tokens[1]);
-                config.max_weight.date.day = (unsigned char)atoi(tokens[2]);
-                config.max_weight.weight10x = (unsigned char)atoi(tokens[3]);
+                Tokens_parse(buffer, &tokens);
+                config.max_weight.date.year = atoi(tokens.list[0]);
+                config.max_weight.date.month = (unsigned char)atoi(tokens.list[1]);
+                config.max_weight.date.day = (unsigned char)atoi(tokens.list[2]);
+                config.max_weight.weight10x = (unsigned char)atoi(tokens.list[3]);
+                Tokens_cleanup(&tokens);
             } else if (line == 2) {
-                config.min_weight.date.year = atoi(tokens[0]);
-                config.min_weight.date.month = (unsigned char)atoi(tokens[1]);
-                config.min_weight.date.day = (unsigned char)atoi(tokens[2]);
-                config.min_weight.weight10x = (unsigned char)atoi(tokens[3]);
+                Tokens_parse(buffer, &tokens);
+                config.min_weight.date.year = atoi(tokens.list[0]);
+                config.min_weight.date.month = (unsigned char)atoi(tokens.list[1]);
+                config.min_weight.date.day = (unsigned char)atoi(tokens.list[2]);
+                config.min_weight.weight10x = (unsigned char)atoi(tokens.list[3]);
+                Tokens_cleanup(&tokens);
             }
         } else {
-            fclose(fp);
+            fclose(fp); fp = NULL;
             return false;
         }
     }
-    fclose(fp);
+    fclose(fp); fp = NULL;
     return true;
 }
 
@@ -625,7 +635,7 @@ unsigned char Config_save(struct Config *config) {
     } else {
         csv = Entry_to_csv(&config->last_entry);
         fputs(buffer, fp);
-        fclose(fp);
+        fclose(fp); fp = NULL;
         free(csv);
         return true;
     }
@@ -686,7 +696,7 @@ void Entry_save_month(unsigned int year, unsigned char month) {
     } else {
         printf("Error opening file\n");
     }
-    fclose(fp);
+    fclose(fp); fp = NULL;
     free(filename);
 }
 
@@ -723,7 +733,7 @@ void Entry_save(struct Entry *entry) {
     } else {
         printf("Error opening file\n");
     }
-    fclose(fp);
+    fclose(fp); fp = NULL;
     free(csv);
     free(filename);
 }

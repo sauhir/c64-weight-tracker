@@ -19,10 +19,10 @@
 #ifndef __wtrack64_h_
 #define __wtrack64_h_
 
-#define BUF_LEN 512
-#define FILENAME_LEN 16
+#define BUF_LEN 80
+#define FILENAME_LEN 17
 #define NUM_FILES 24
-#define LINES_PER_PAGE 23
+#define LINES_PER_PAGE 22
 
 static const char KEY_NEWLINE = 13;
 static const char KEY_BACKSPACE = 20;
@@ -54,6 +54,10 @@ struct Files {
     unsigned char count;
 };
 
+struct Tokens {
+    unsigned char *list[NUM_FILES];
+    unsigned char count;
+};
 
 /* Function prototypes */
 unsigned char View_main_menu(void);
@@ -67,7 +71,8 @@ unsigned int Input_get_decimal(void);
 unsigned int Input_parse_decimal(unsigned char *);
 unsigned int Input_validate_decimal(unsigned char *);
 
-void Tokens_parse(unsigned char *, unsigned char **);
+void Tokens_parse(unsigned char *input, struct Tokens *);
+void Tokens_cleanup(struct Tokens *);
 
 void Files_add_file(unsigned char *, unsigned int, unsigned char **);
 void Files_read_dir(struct Files *);
