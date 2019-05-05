@@ -32,7 +32,6 @@
 #include "entry.h"
 
 static const char st_title_welcome[] = "Weight Tracker 64 (c) Sauli Hirvi 2019";
-static const char st_title_date[] = "What date is it today?";
 static const char st_prompt_day[] = "Day";
 static const char st_prompt_month[] = "Month";
 static const char st_prompt_year[] = "Year";
@@ -118,7 +117,7 @@ unsigned char View_main_menu(void) {
         cprintf("-> Quit program\r\n");
         textcolor(COLOR_GREEN);
         revers(0);
-        cprintf("Choose: ");
+
         textcolor(COLOR_LIGHTGREEN);
         input = cgetc();
         if (input == ' ' || input == KEY_NEWLINE) {
@@ -208,8 +207,6 @@ void View_new_entry(void) {
     bool status, is_new;
 
     new_entry = (struct Entry *)calloc(1, sizeof(struct Entry));
-
-    cprintf("%s\r\n", st_title_date);
 
     old_entry = NULL;
     Date_increment(&config->last_entry.date);
