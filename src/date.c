@@ -27,7 +27,7 @@ void Date_increment(struct Date *date) {
         return;
     }
 
-    date->day;
+    date->day += 1;
 
     if (date->day > days_in_month[date->month-1]) {
         date->day = 1;

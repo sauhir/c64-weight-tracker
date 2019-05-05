@@ -40,9 +40,9 @@ static const char st_prompt_weight[] = "Weight: ";
 
 struct Files files;
 
-struct Entries entries;
+struct Entries *entries;
 
-struct Config config;
+struct Config *config;
 
 unsigned char days_in_month[] = {
     31, 28, 31,
@@ -60,7 +60,10 @@ int main(void) {
     unsigned char choice;
     clrscr();
 
-    (void)Config_load(&config);
+    config = (struct Config *)calloc(1, sizeof(struct Config));
+    entries = (struct Entries *)calloc(1, sizeof(struct Entries));
+
+    (void)Config_load(config);
 
     revers(0);
     bgcolor(COLOR_BLACK);
@@ -77,7 +80,7 @@ int main(void) {
         } else if (choice == 2) {
             View_new_entry();
             cgetc();
-            Config_save(&config);
+            Config_save(config);
         } else if (choice == 3) {
             cprintf("\r\nShutting down...\r\n");
             break;
@@ -85,7 +88,6 @@ int main(void) {
     }
 
     sleep(2);
-    cleanup();
     clrscr();
     return EXIT_SUCCESS;
 }
@@ -153,9 +155,10 @@ void View_dir_list(void) {
 
     selection = View_dir_list_menu(&files);
 
-    Files_list_entries(files.list[selection], &entries);
+    Files_list_entries(files.list[selection], entries);
     Files_cleanup(&files);
-    cprintf("\r\nPress any key\n\r");
+    textcolor(COLOR_GREEN);
+    cprintf("Press any key\n\r");
 }
 
 unsigned char View_dir_list_menu(struct Files *files) {
@@ -199,86 +202,91 @@ unsigned char View_dir_list_menu(struct Files *files) {
  * Make a new entry from user input.
  */
 void View_new_entry(void) {
-    struct Date new_date;
-    struct Entry entry;
-    struct Entry *old_entry;
-    bool status;
     unsigned char filename[17];
-    unsigned int weight;
+    struct Entry *new_entry;
+    struct Entry *old_entry;
+    bool status, is_new;
+
+    new_entry = (struct Entry *)calloc(1, sizeof(struct Entry));
 
     cprintf("%s\r\n", st_title_date);
 
     old_entry = NULL;
-    Date_increment(&config.last_entry.date);
-    new_date = config.last_entry.date;
+    Date_increment(&config->last_entry.date);
+    new_entry->date = config->last_entry.date;
 
-    new_date.year = 0;
+    new_entry->date.year = 0;
 
-    while (new_date.year == 0) {
-        cprintf("\r\n%s [%d]:", st_prompt_year, config.last_entry.date.year);
-        new_date.year = Input_get_integer();
-        if (new_date.year == 0 && config.last_entry.date.year > 0) {
-            new_date.year = config.last_entry.date.year;
+    while (new_entry->date.year == 0) {
+        cprintf("\r\n%s [%d]:", st_prompt_year, config->last_entry.date.year);
+        new_entry->date.year = Input_get_integer();
+        if (new_entry->date.year == 0 && config->last_entry.date.year > 0) {
+            new_entry->date.year = config->last_entry.date.year;
             break;
         }
     }
 
-    new_date.month = 0;
-    while (new_date.month < 1 || new_date.month > 12) {
-        cprintf("\r\n%s [%d]:", st_prompt_month, config.last_entry.date.month);
-        new_date.month = (char)Input_get_integer();
-        if (new_date.month == 0 && config.last_entry.date.month > 0) {
-            new_date.month = config.last_entry.date.month;
+    new_entry->date.month = 0;
+    while (new_entry->date.month < 1 || new_entry->date.month > 12) {
+        cprintf("\r\n%s [%d]:", st_prompt_month, config->last_entry.date.month);
+        new_entry->date.month = (char)Input_get_integer();
+        if (new_entry->date.month == 0 && config->last_entry.date.month > 0) {
+            new_entry->date.month = config->last_entry.date.month;
             break;
         }
     }
 
-    new_date.day = 0;
-    while (new_date.day < 1 || new_date.day > 31) {
-        cprintf("\r\n%s [%d]:", st_prompt_day, config.last_entry.date.day);
-        new_date.day = (char)Input_get_integer();
-        if (new_date.day == 0 && config.last_entry.date.day > 0) {
-            new_date.day = config.last_entry.date.day;
+    new_entry->date.day = 0;
+    while (new_entry->date.day < 1 || new_entry->date.day > 31) {
+        cprintf("\r\n%s [%d]:", st_prompt_day, config->last_entry.date.day);
+        new_entry->date.day = (char)Input_get_integer();
+        if (new_entry->date.day == 0 && config->last_entry.date.day > 0) {
+            new_entry->date.day = config->last_entry.date.day;
             break;
         }
     }
 
     cprintf("\r\n%s", st_prompt_weight);
-    weight = Input_get_decimal();
-
-    entry.weight10x = weight;
-    entry.date = new_date;
+    new_entry->weight10x = Input_get_decimal();
 
     /* Load the file determined by new_date */
     sprintf(filename, "%04d%02d.dat",
-        new_date.year, new_date.month);
-    status = Files_load_entries(filename, &entries);
+        new_entry->date.year, new_entry->date.month);
+
+    memset(entries->list, 0, MAX_ENTRIES);
+    entries->count = 0;
+
+    status = Files_load_entries(filename, entries);
+
+    Entry_sort(entries);
+    Entry_remove_duplicates(entries);
 
     /* Check if the current entry already exists */
     if (status == true) {
-        old_entry = Entry_find(&entries, &new_date);
+        old_entry = Entry_find(entries, new_entry);
     }
 
     if (old_entry != NULL) {
-        old_entry->weight10x = entry.weight10x;
+        old_entry->weight10x = new_entry->weight10x;
+        is_new = false;
     } else {
-        entries.list[entries.count] = entry;
-        entries.count += 1;
+        entries->list[entries->count] = *new_entry;
+        entries->count += 1;
+        is_new = true;
     }
 
-    Entry_sort(&entries);
     /* Rewrite the existing entry if exists */
-    Entry_save_month(&entries, new_date.year, new_date.month);
+    Entry_save_month(entries, new_entry->date.year, new_entry->date.month);
 
     cprintf("\r\nEntry saved.\r\n");
 
-    config.last_entry.date = entry.date;
-}
-
-/*
- * Free allocations.
- */
-void cleanup(void) {
-
+    if (is_new == true) {
+        config->last_entry.date = new_entry->date;
+        config->last_entry.weight10x = new_entry->weight10x;
+    } else {
+        config->last_entry.date = old_entry->date;
+        config->last_entry.weight10x = old_entry->weight10x;
+    }
+    Config_save(config);
 }
 

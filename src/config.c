@@ -29,37 +29,39 @@
  */
 unsigned char Config_load(struct Config *config) {
     FILE *fp;
-    unsigned char line=0;
-    struct Tokens tokens;
-    unsigned char buffer[BUF_LEN];
+    struct Tokens *tokens;
+    unsigned char *buffer;
+    unsigned char line;
+    struct Entry *entry;
+
+    line = 0;
+
+    tokens = (struct Tokens*)calloc(1, sizeof(struct Tokens));
+    buffer = (unsigned char *)calloc(BUF_LEN, sizeof(unsigned char));
 
     fp = fopen("config.cfg", "r");
     if (fp == NULL) {
         return false;
     } else {
         if (fgets(buffer, BUF_LEN, fp) != NULL) {
+            entry = NULL;
             if (line == 0) {
-                Tokens_parse(buffer, &tokens);
-                config->last_entry.date.year = atoi(tokens.list[0]);
-                config->last_entry.date.month = (unsigned char)atoi(tokens.list[1]);
-                config->last_entry.date.day = (unsigned char)atoi(tokens.list[2]);
-                config->last_entry.weight10x = (unsigned char)atoi(tokens.list[3]);
-                Tokens_cleanup(&tokens);
+                entry = &config->last_entry;
             } else if (line == 1) {
-                Tokens_parse(buffer, &tokens);
-                config->max_weight.date.year = atoi(tokens.list[0]);
-                config->max_weight.date.month = (unsigned char)atoi(tokens.list[1]);
-                config->max_weight.date.day = (unsigned char)atoi(tokens.list[2]);
-                config->max_weight.weight10x = (unsigned char)atoi(tokens.list[3]);
-                Tokens_cleanup(&tokens);
+                entry = &config->max_weight;
             } else if (line == 2) {
-                Tokens_parse(buffer, &tokens);
-                config->min_weight.date.year = atoi(tokens.list[0]);
-                config->min_weight.date.month = (unsigned char)atoi(tokens.list[1]);
-                config->min_weight.date.day = (unsigned char)atoi(tokens.list[2]);
-                config->min_weight.weight10x = (unsigned char)atoi(tokens.list[3]);
-                Tokens_cleanup(&tokens);
+                entry = &config->min_weight;
             }
+
+            if (entry != NULL) {
+                Tokens_parse(buffer, tokens);
+                entry->date.year = atoi(tokens->list[0]);
+                entry->date.month = (unsigned char)atoi(tokens->list[1]);
+                entry->date.day = (unsigned char)atoi(tokens->list[2]);
+                entry->weight10x = (unsigned char)atoi(tokens->list[3]);
+                Tokens_cleanup(tokens);
+            }
+            ++line;
         } else {
             fclose(fp); fp = NULL;
             return false;
@@ -86,7 +88,7 @@ unsigned char Config_save(struct Config *config) {
         return false;
     } else {
         csv = Entry_to_csv(&config->last_entry);
-        fputs(buffer, fp);
+        fputs(csv, fp);
         fclose(fp); fp = NULL;
         free(csv);
         return true;

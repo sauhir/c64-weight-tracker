@@ -119,15 +119,13 @@ void Entry_save(struct Entry *entry) {
 /*
  * Find an entry based on date.
  */
-struct Entry *Entry_find(struct Entries *entries, struct Date *date) {
+struct Entry *Entry_find(struct Entries *entries, struct Entry *entry) {
     unsigned char i;
-    bool is_equal = true;
 
     for (i=0; i<entries->count; ++i) {
-        if (entries->list[i].date.day != date->day) is_equal = false;
-        if (entries->list[i].date.month != date->month) is_equal = false;
-        if (entries->list[i].date.year != date->year) is_equal = false;
-        if (is_equal == true) {
+        if (entries->list[i].date.day == entry->date.day &&
+            entries->list[i].date.month == entry->date.month &&
+            entries->list[i].date.year == entry->date.year) {
             return &entries->list[i];
         }
     }
@@ -190,3 +188,30 @@ bool Entry_validate(struct Entry *entry) {
     }
     return true;
 }
+
+/*
+ * Remove duplicate entries from a sorted array.
+ */
+void Entry_remove_duplicates(struct Entries *entries) {
+    unsigned char i,j;
+    unsigned char prev_day;
+    struct Entries *clean_entries;
+    clean_entries = (struct Entries *)calloc(1, sizeof(struct Entries));
+
+    prev_day = 0;
+    for (i=0, j=0; i<entries->count; ++i) {
+        if (entries->list[i].date.day != prev_day) {
+            clean_entries->list[j] = entries->list[i];
+            ++j;
+        }
+        prev_day = entries->list[i].date.day;
+    }
+    clean_entries->count = j;
+
+    for (i=0; i<clean_entries->count; ++i) {
+        entries->list[i] = clean_entries->list[i];
+    }
+    entries->count = clean_entries->count;
+    free(clean_entries);
+}
+

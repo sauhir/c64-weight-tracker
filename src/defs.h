@@ -19,6 +19,15 @@
 #ifndef __defs_h_
 #define __defs_h_
 
+#define BUF_LEN 80
+#define FILENAME_LEN 17
+#define NUM_FILES 24
+#define LINES_PER_PAGE 22
+#define MAX_ENTRIES 31
+
+#define KEY_NEWLINE 13
+#define KEY_BACKSPACE 20
+
 struct Date {
     unsigned char day;
     unsigned char month;
@@ -36,16 +45,8 @@ struct Config {
     struct Entry min_weight;
 };
 
-#define BUF_LEN 80
-#define FILENAME_LEN 17
-#define NUM_FILES 24
-#define LINES_PER_PAGE 22
-
-#define KEY_NEWLINE 13
-#define KEY_BACKSPACE 20
-
 struct Entries {
-    struct Entry list[31];
+    struct Entry list[MAX_ENTRIES];
     unsigned char count;
 };
 

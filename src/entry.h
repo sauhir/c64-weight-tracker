@@ -31,11 +31,11 @@ void Entry_parse(unsigned char *, struct Entry *);
 void Entry_print(struct Entry *);
 void Entry_save_month(struct Entries *, unsigned int, unsigned char);
 void Entry_save(struct Entry *);
-struct Entry *Entry_find(struct Entries *, struct Date *);
+struct Entry *Entry_find(struct Entries *, struct Entry *);
 void Entry_swap(struct Entry *, struct Entry *);
 void Entry_sort(struct Entries *);
 char *Entry_format_weight(unsigned int);
 bool Entry_validate(struct Entry *);
 unsigned char *Entry_to_csv(struct Entry *);
-
+void Entry_remove_duplicates(struct Entries *);
 #endif

@@ -87,6 +87,7 @@ void Files_list_entries(unsigned char *filename, struct Entries *entries) {
     textcolor(COLOR_LIGHTGREEN);
     free(date);
     Entry_sort(entries);
+    Entry_remove_duplicates(entries);
 
     for (i=0; i<entries->count; ++i) {
         Entry_print(&entries->list[i]);

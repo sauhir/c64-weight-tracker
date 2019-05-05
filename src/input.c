@@ -30,6 +30,7 @@ unsigned int Input_get_integer(void) {
     unsigned char i, x, y;
     unsigned int num;
     unsigned char buffer[BUF_LEN];
+    memset(buffer, 0, BUF_LEN);
 
     i = 0;
     cursor(1);
@@ -68,6 +69,7 @@ unsigned int Input_get_decimal(void) {
     char input;
     unsigned char i, x, y;
     unsigned char buffer[BUF_LEN];
+    memset(buffer, 0, BUF_LEN);
 
     i = 0;
     cursor(1);

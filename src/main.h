@@ -29,6 +29,5 @@ unsigned char View_main_menu(void);
 void View_dir_list(void);
 unsigned char View_dir_list_menu(struct Files *);
 void View_new_entry(void);
-void cleanup(void);
 
 #endif
