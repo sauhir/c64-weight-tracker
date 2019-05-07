@@ -17,7 +17,7 @@ SRC = $(SRC_DIR)/menu.c \
 
 .PHONY: directories
 
-all: directories
+all: directories wtrack64
 
 directories: $(BIN_DIR) $(SRC_DIR)
 
@@ -29,10 +29,6 @@ $(SRC_DIR):
 
 wtrack64: directories
 	cl65 --standard c89 -Osir $(SRC) -o $(BIN_DIR)/wtrack64.prg
-
-run: directories
-	cl65 --standard c89 -Osir $(SRC) -o $(BIN_DIR)/wtrack64.prg && \
-	x64 $(BIN_DIR)/wtrack64.d64
 
 d64: wtrack64
 	if ! [ -f $(BIN_DIR)/wtrack.d64 ]; then \
