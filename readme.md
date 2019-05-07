@@ -9,5 +9,6 @@ The program is still heavily under construction. The basic functionality is as f
 * VICE emulator if you do not want to run on original hardware
 
 ## Todo
-* Rewrite existing entries if same date
 * Joystick interface
+* Delete individual entries
+* Pretty PETSCII graphics
