@@ -24,7 +24,6 @@
 void Files_add_file(unsigned char *, unsigned int, unsigned char **);
 void Files_read_dir(struct Files *);
 bool Files_load_entries(unsigned char *, struct Entries *);
-void Files_list_entries(unsigned char *, struct Entries *);
 void Files_swap(unsigned char *, unsigned char *);
 void Files_sort(struct Files *);
 void Files_delete(unsigned char *);

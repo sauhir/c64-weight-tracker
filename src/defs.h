@@ -60,6 +60,15 @@ struct Tokens {
     unsigned char count;
 };
 
+struct Menu {
+    unsigned char *list[MAX_ENTRIES];
+    unsigned char count;
+    unsigned char selected;
+    unsigned char num_lines;
+    unsigned char offset;
+
+};
+
 extern unsigned char days_in_month[];
 extern unsigned char *month_names[];
 

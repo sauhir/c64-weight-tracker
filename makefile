@@ -6,7 +6,8 @@ MKDIR_P = mkdir -p
 BIN_DIR = bin
 SRC_DIR = src
 
-SRC = $(SRC_DIR)/entry.c \
+SRC = $(SRC_DIR)/menu.c \
+      $(SRC_DIR)/entry.c \
       $(SRC_DIR)/input.c \
       $(SRC_DIR)/date.c  \
       $(SRC_DIR)/files.c \

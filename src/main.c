@@ -30,6 +30,7 @@
 #include "date.h"
 #include "input.h"
 #include "entry.h"
+#include "menu.h"
 
 static const char st_title_welcome[] = "Weight Tracker 64 (c) Sauli Hirvi 2019";
 static const char st_prompt_day[] = "Day";
@@ -95,9 +96,16 @@ int main(void) {
  * Display main menu choice
  */
 unsigned char View_main_menu(void) {
-    unsigned char input, selection;
+    unsigned char input, retval;
+    struct Menu *menu;
 
-    selection = 0;
+    menu = (struct Menu *)calloc(1, sizeof(struct Menu));
+
+    Menu_add_item(menu, "-> List existing entries");
+    Menu_add_item(menu, "-> Add a new entry");
+    Menu_add_item(menu, "-> Quit program");
+
+    menu->selected = 0;
     clrscr();
     textcolor(COLOR_GRAY2);
     cprintf("%s\r\n", st_title_welcome);
@@ -109,25 +117,75 @@ unsigned char View_main_menu(void) {
 
     while (1) {
         gotoxy(0, 3);
-        revers(selection == 0);
-        cprintf("-> List existing entries\r\n");
-        revers(selection == 1);
-        cprintf("-> Add a new entry\r\n");
-        revers(selection == 2);
-        cprintf("-> Quit program\r\n");
+        Menu_draw(menu);
         textcolor(COLOR_GREEN);
         revers(0);
 
         textcolor(COLOR_LIGHTGREEN);
         input = cgetc();
         if (input == ' ' || input == KEY_NEWLINE) {
-            return selection+1;
+            retval = menu->selected+1;
+            break;
         } else if (input == 'j') {
-            selection = (selection+1)%3;
+            menu->selected = (menu->selected+1)%3;
         } else if (input == 'k') {
-            selection = (selection-1)%3;
+            menu->selected = (menu->selected-1)%3;
         }
     }
+    Menu_cleanup(menu);
+    free(menu);
+    return retval;
+}
+
+void View_entry_list(unsigned char *filename, struct Entries *entries) {
+    unsigned char i, line, retval, input;
+    struct Date *date;
+    struct Menu *menu;
+    unsigned char *entry_tmp;
+
+    menu = (struct Menu *)calloc(1, sizeof(struct Menu));
+
+    Files_load_entries(filename, entries);
+
+    date = Date_parse_filename(filename);
+    clrscr();
+    gotoxy(0, 0);
+    textcolor(COLOR_GREEN);
+    cprintf("Entries for %s %d:\r\n", month_names[date->month-1], date->year);
+    line = 0;
+    textcolor(COLOR_LIGHTGREEN);
+    free(date);
+    Entry_sort(entries);
+    Entry_remove_duplicates(entries);
+
+    for (i=0; i<entries->count; ++i) {
+        entry_tmp = Entry_format(&entries->list[i]);
+        Menu_add_item(menu, entry_tmp);
+        free(entry_tmp);
+    }
+
+    menu->selected = 0;
+
+    cursor(0);
+    input = 0;
+    while (1) {
+        gotoxy(0,2);
+        Menu_draw(menu);
+
+        input = cgetc();
+
+        if (input == ' ' || input == 13) {
+            retval = menu->selected;
+            break;
+        } else if (input == 'j') {
+            menu->selected = (menu->selected+1)%menu->count;
+        } else if (input == 'k') {
+            menu->selected = (menu->selected-1)%menu->count;
+        }
+    }
+
+    Menu_cleanup(menu);
+    free(menu);
 }
 
 /*
@@ -154,47 +212,60 @@ void View_dir_list(void) {
 
     selection = View_dir_list_menu(&files);
 
-    Files_list_entries(files.list[selection], entries);
+    View_entry_list(files.list[selection], entries);
     Files_cleanup(&files);
     textcolor(COLOR_GREEN);
     cprintf("Press any key\n\r");
 }
 
 unsigned char View_dir_list_menu(struct Files *files) {
-    unsigned char input;
+    unsigned char input, retval;
     unsigned char i;
-    unsigned char selection;
-    struct Date *file_date;
     unsigned char *file_ptr;
+    unsigned char menu_item[40];
+    struct Date *file_date;
+    struct Menu *menu;
+
+    menu = (struct Menu *)calloc(1, sizeof(struct Menu));
+
+    while (file_ptr = files->list[i]) {
+        file_date = Date_parse_filename(file_ptr);
+        sprintf(menu_item, "-> %s %d", month_names[file_date->month-1], file_date->year);
+        Menu_add_item(menu, menu_item);
+        free(file_date);
+        ++i;
+    }
+
+    menu->selected = 0;
 
     cursor(0);
     input = 0;
     while (1) {
         gotoxy(0,2);
         i = 0;
-        while (file_ptr = files->list[i]) {
-            revers(selection == i);
-            file_date = Date_parse_filename(file_ptr);
-            cprintf("-> %s %d\r\n", month_names[file_date->month-1], file_date->year);
-            free(file_date);
-            ++i;
-        }
+
+        Menu_draw(menu);
         revers(0);
 
         input = cgetc();
 
         if (input == ' ' || input == 13) {
-            return selection;
+            retval = menu->selected;
+            break;
         } else if (input == 'j') {
-            selection = (selection+1)%files->count;
+            menu->selected = (menu->selected+1)%files->count;
         } else if (input == 'k') {
-            selection = (selection-1)%files->count;
+            menu->selected = (menu->selected-1)%files->count;
         } else if (input == 'd') {
-            Files_delete(files->list[selection]);
-            cprintf("File: %s deleted.\r\n", files->list[selection]);
-            return 255;
+            Files_delete(files->list[menu->selected]);
+            cprintf("File: %s deleted.\r\n", files->list[menu->selected]);
+            retval = 255;
+            break;
         }
     }
+    Menu_cleanup(menu);
+    free(menu);
+    return retval;
 }
 
 /*

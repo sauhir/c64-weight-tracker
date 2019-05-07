@@ -39,15 +39,18 @@ void Entry_parse(unsigned char *input, struct Entry *output) {
 }
 
 /*
- * Print formatted entry.
+ * Return formatted entry.
  */
-void Entry_print(struct Entry *entry) {
-    char *weight_str;
+unsigned char *Entry_format(struct Entry *entry) {
+    unsigned char *weight_str, *entry_str;
     weight_str = Entry_format_weight(entry->weight10x);
 
-    cprintf("%d-%02d-%02d: %s kg\r\n",
+    entry_str = (unsigned char*)calloc(24, sizeof(unsigned char));
+
+    sprintf(entry_str, "%4d-%02d-%02d: %s kg",
         entry->date.year, entry->date.month, entry->date.day, weight_str);
     free(weight_str);
+    return entry_str;
 }
 
 /*
@@ -167,7 +170,7 @@ unsigned char *Entry_format_weight(unsigned int weight) {
     unsigned char decimal;
     unsigned char *str;
 
-    str = (unsigned char *)calloc(5, sizeof(char));
+    str = (unsigned char *)calloc(6, sizeof(char));
     integer = weight / 10;
     decimal = weight % integer;
     sprintf(str, "%d.%d", integer, decimal);

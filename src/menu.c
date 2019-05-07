@@ -16,26 +16,34 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "menu.h"
 #include <conio.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-#include "defs.h"
+#include <stdlib.h>
 
-#ifndef __entry_h_
-#define __entry_h_
+void Menu_draw(struct Menu *menu) {
+    unsigned char i;
 
-#include <stdbool.h>
+    for (i=0; i<menu->count; ++i) {
+        revers(menu->selected == i);
+        cprintf("%s\r\n", menu->list[i]);
+    }
+}
 
-void Entry_parse(unsigned char *, struct Entry *);
-unsigned char *Entry_format(struct Entry *);
-void Entry_save_month(struct Entries *, unsigned int, unsigned char);
-void Entry_save(struct Entry *);
-struct Entry *Entry_find(struct Entries *, struct Entry *);
-void Entry_swap(struct Entry *, struct Entry *);
-void Entry_sort(struct Entries *);
-unsigned char *Entry_format_weight(unsigned int);
-bool Entry_validate(struct Entry *);
-unsigned char *Entry_to_csv(struct Entry *);
-void Entry_remove_duplicates(struct Entries *);
-#endif
+void Menu_add_item(struct Menu *menu, unsigned char *item) {
+    unsigned char *new_item;
+    new_item = (unsigned char*)calloc(strlen(item)+1, sizeof(unsigned char));
+    strcpy(new_item, item);
+    menu->list[menu->count] = new_item;
+    menu->count += 1;
+}
+
+void Menu_cleanup(struct Menu *menu) {
+    unsigned char i;
+
+    for (i=0; i<menu->count; ++i) {
+        free(menu->list[i]);
+        menu->list[i] = NULL;
+    }
+    menu->count = 0;
+}

@@ -16,26 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <conio.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#ifndef __menu_h_
+#define __menu_h_
+
 #include "defs.h"
-
-#ifndef __entry_h_
-#define __entry_h_
-
-#include <stdbool.h>
-
-void Entry_parse(unsigned char *, struct Entry *);
-unsigned char *Entry_format(struct Entry *);
-void Entry_save_month(struct Entries *, unsigned int, unsigned char);
-void Entry_save(struct Entry *);
-struct Entry *Entry_find(struct Entries *, struct Entry *);
-void Entry_swap(struct Entry *, struct Entry *);
-void Entry_sort(struct Entries *);
-unsigned char *Entry_format_weight(unsigned int);
-bool Entry_validate(struct Entry *);
-unsigned char *Entry_to_csv(struct Entry *);
-void Entry_remove_duplicates(struct Entries *);
+void Menu_draw(struct Menu *);
+void Menu_add_item(struct Menu *, unsigned char *);
+void Menu_cleanup(struct Menu *);
 #endif

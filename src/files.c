@@ -71,35 +71,6 @@ bool Files_load_entries(unsigned char *filename, struct Entries *entries) {
 }
 
 /*
- * Read entries from file and print them.
- */
-void Files_list_entries(unsigned char *filename, struct Entries *entries) {
-    unsigned char i, line;
-    struct Date *date;
-    Files_load_entries(filename, entries);
-
-    date = Date_parse_filename(filename);
-    clrscr();
-    gotoxy(0, 0);
-    textcolor(COLOR_GREEN);
-    cprintf("Entries for %s %d:\r\n", month_names[date->month-1], date->year);
-    line = 0;
-    textcolor(COLOR_LIGHTGREEN);
-    free(date);
-    Entry_sort(entries);
-    Entry_remove_duplicates(entries);
-
-    for (i=0; i<entries->count; ++i) {
-        Entry_print(&entries->list[i]);
-        if (++line == LINES_PER_PAGE) {
-            cgetc();
-            clrscr();
-            line = 0;
-        }
-    }
-}
-
-/*
  * Swap file pointers.
  */
 void Files_swap(unsigned char *a, unsigned char *b) {
